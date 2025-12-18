@@ -6,6 +6,7 @@ import '../presentation/screens/login_screen.dart';
 import '../presentation/screens/otp_screen.dart';
 import '../presentation/screens/dashboard_screen.dart';
 import '../presentation/screens/loan_list_screen.dart';
+import '../presentation/screens/loan_form_screen.dart';
 
 /// Route names as constants - prevents typos
 class Routes {
@@ -87,13 +88,13 @@ final appRouter = GoRouter(
       },
     ),
     
-    // New application form (TODO)
+    // New application form
     GoRoute(
       path: Routes.newApplication,
       name: 'newApplication',
       pageBuilder: (context, state) => _buildSlideTransition(
         state,
-        const Scaffold(body: Center(child: Text('New Application - TODO'))),
+        const LoanFormScreen(),
       ),
     ),
   ],
