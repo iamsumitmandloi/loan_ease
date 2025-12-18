@@ -75,7 +75,7 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
               backgroundColor: AppColors.success,
             ),
           );
-          context.go(Routes.loanList);
+          context.pushReplacement(Routes.loanList);
         }
         if (state.submitError != null) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -100,25 +100,16 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
             children: [
               // Progress indicator
               _buildProgressIndicator(state.currentStep),
-              
+
               // Form pages
               Expanded(
                 child: PageView(
                   controller: _pageController,
                   physics: const NeverScrollableScrollPhysics(),
                   children: [
-                    _BusinessDetailsStep(
-                      formCubit: _formCubit,
-                      state: state,
-                    ),
-                    _ApplicantDetailsStep(
-                      formCubit: _formCubit,
-                      state: state,
-                    ),
-                    _LoanRequirementsStep(
-                      formCubit: _formCubit,
-                      state: state,
-                    ),
+                    _BusinessDetailsStep(formCubit: _formCubit, state: state),
+                    _ApplicantDetailsStep(formCubit: _formCubit, state: state),
+                    _LoanRequirementsStep(formCubit: _formCubit, state: state),
                     _ReviewStep(
                       formCubit: _formCubit,
                       state: state,
@@ -127,7 +118,7 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
                   ],
                 ),
               ),
-              
+
               // Navigation buttons
               _buildNavigationButtons(state),
             ],
@@ -145,7 +136,7 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
         children: List.generate(4, (index) {
           final isCompleted = index < currentStep;
           final isCurrent = index == currentStep;
-          
+
           return Expanded(
             child: Row(
               children: [
@@ -158,8 +149,8 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
                     color: isCompleted
                         ? AppColors.success
                         : isCurrent
-                            ? AppColors.primary
-                            : AppColors.divider,
+                        ? AppColors.primary
+                        : AppColors.divider,
                   ),
                   child: Center(
                     child: isCompleted
@@ -167,7 +158,9 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
                         : Text(
                             '${index + 1}',
                             style: TextStyle(
-                              color: isCurrent ? Colors.white : AppColors.textSecondary,
+                              color: isCurrent
+                                  ? Colors.white
+                                  : AppColors.textSecondary,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
@@ -179,7 +172,9 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
                   Expanded(
                     child: Container(
                       height: 2,
-                      color: isCompleted ? AppColors.success : AppColors.divider,
+                      color: isCompleted
+                          ? AppColors.success
+                          : AppColors.divider,
                     ),
                   ),
               ],
@@ -219,8 +214,8 @@ class _LoanFormScreenState extends State<LoanFormScreen> {
               onPressed: state.isSubmitting
                   ? null
                   : state.currentStep < 3
-                      ? _nextStep
-                      : () => _formCubit.submit(),
+                  ? _nextStep
+                  : () => _formCubit.submit(),
               child: state.isSubmitting
                   ? const SizedBox(
                       height: 20,
@@ -274,10 +269,7 @@ class _BusinessDetailsStep extends StatelessWidget {
   final LoanFormCubit formCubit;
   final LoanFormState state;
 
-  const _BusinessDetailsStep({
-    required this.formCubit,
-    required this.state,
-  });
+  const _BusinessDetailsStep({required this.formCubit, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -303,9 +295,7 @@ class _BusinessDetailsStep extends StatelessWidget {
             child: DropdownButtonFormField<BusinessType>(
               value: state.formData['businessType'] as BusinessType?,
               onChanged: (v) => formCubit.updateField('businessType', v),
-              decoration: const InputDecoration(
-                hintText: 'Select type',
-              ),
+              decoration: const InputDecoration(hintText: 'Select type'),
               items: BusinessType.values.map((type) {
                 return DropdownMenuItem(
                   value: type,
@@ -320,9 +310,7 @@ class _BusinessDetailsStep extends StatelessWidget {
             child: TextFormField(
               initialValue: state.formData['registrationNumber'] as String?,
               onChanged: (v) => formCubit.updateField('registrationNumber', v),
-              decoration: const InputDecoration(
-                hintText: 'UDYAM / CIN number',
-              ),
+              decoration: const InputDecoration(hintText: 'UDYAM / CIN number'),
             ),
           ),
           _FormField(
@@ -330,12 +318,11 @@ class _BusinessDetailsStep extends StatelessWidget {
             error: state.validationErrors['yearsInOperation'],
             child: TextFormField(
               initialValue: state.formData['yearsInOperation']?.toString(),
-              onChanged: (v) => formCubit.updateField('yearsInOperation', int.tryParse(v)),
+              onChanged: (v) =>
+                  formCubit.updateField('yearsInOperation', int.tryParse(v)),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                hintText: 'e.g., 5',
-              ),
+              decoration: const InputDecoration(hintText: 'e.g., 5'),
             ),
           ),
         ],
@@ -345,10 +332,14 @@ class _BusinessDetailsStep extends StatelessWidget {
 
   String _getBusinessTypeLabel(BusinessType type) {
     switch (type) {
-      case BusinessType.soleProprietorship: return 'Sole Proprietorship';
-      case BusinessType.partnership: return 'Partnership';
-      case BusinessType.pvtLtd: return 'Private Limited';
-      case BusinessType.llp: return 'LLP';
+      case BusinessType.soleProprietorship:
+        return 'Sole Proprietorship';
+      case BusinessType.partnership:
+        return 'Partnership';
+      case BusinessType.pvtLtd:
+        return 'Private Limited';
+      case BusinessType.llp:
+        return 'LLP';
     }
   }
 }
@@ -359,10 +350,7 @@ class _ApplicantDetailsStep extends StatelessWidget {
   final LoanFormCubit formCubit;
   final LoanFormState state;
 
-  const _ApplicantDetailsStep({
-    required this.formCubit,
-    required this.state,
-  });
+  const _ApplicantDetailsStep({required this.formCubit, required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -389,12 +377,8 @@ class _ApplicantDetailsStep extends StatelessWidget {
               initialValue: state.formData['pan'] as String?,
               onChanged: (v) => formCubit.updateField('pan', v.toUpperCase()),
               textCapitalization: TextCapitalization.characters,
-              inputFormatters: [
-                LengthLimitingTextInputFormatter(10),
-              ],
-              decoration: const InputDecoration(
-                hintText: 'ABCDE1234F',
-              ),
+              inputFormatters: [LengthLimitingTextInputFormatter(10)],
+              decoration: const InputDecoration(hintText: 'ABCDE1234F'),
             ),
           ),
           _FormField(
@@ -408,9 +392,7 @@ class _ApplicantDetailsStep extends StatelessWidget {
                 FilteringTextInputFormatter.digitsOnly,
                 LengthLimitingTextInputFormatter(12),
               ],
-              decoration: const InputDecoration(
-                hintText: '12-digit Aadhaar',
-              ),
+              decoration: const InputDecoration(hintText: '12-digit Aadhaar'),
             ),
           ),
           _FormField(
@@ -437,9 +419,7 @@ class _ApplicantDetailsStep extends StatelessWidget {
               initialValue: state.formData['email'] as String?,
               onChanged: (v) => formCubit.updateField('email', v),
               keyboardType: TextInputType.emailAddress,
-              decoration: const InputDecoration(
-                hintText: 'email@example.com',
-              ),
+              decoration: const InputDecoration(hintText: 'email@example.com'),
             ),
           ),
         ],
@@ -454,14 +434,13 @@ class _LoanRequirementsStep extends StatelessWidget {
   final LoanFormCubit formCubit;
   final LoanFormState state;
 
-  const _LoanRequirementsStep({
-    required this.formCubit,
-    required this.state,
-  });
+  const _LoanRequirementsStep({required this.formCubit, required this.state});
 
   @override
   Widget build(BuildContext context) {
-    final amount = (state.formData['requestedAmount'] as double?) ?? AppConstants.minLoanAmount;
+    final amount =
+        (state.formData['requestedAmount'] as double?) ??
+        AppConstants.minLoanAmount;
     final purposes = (state.formData['purpose'] as List<String>?) ?? [];
 
     return SingleChildScrollView(
@@ -475,7 +454,10 @@ class _LoanRequirementsStep extends StatelessWidget {
             child: Column(
               children: [
                 Slider(
-                  value: amount.clamp(AppConstants.minLoanAmount, AppConstants.maxLoanAmount),
+                  value: amount.clamp(
+                    AppConstants.minLoanAmount,
+                    AppConstants.maxLoanAmount,
+                  ),
                   min: AppConstants.minLoanAmount,
                   max: AppConstants.maxLoanAmount,
                   divisions: 99,
@@ -492,7 +474,10 @@ class _LoanRequirementsStep extends StatelessWidget {
                 ),
                 Text(
                   '(₹50,000 - ₹50,00,000)',
-                  style: TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                  style: TextStyle(
+                    color: AppColors.textSecondary,
+                    fontSize: 12,
+                  ),
                 ),
               ],
             ),
@@ -502,12 +487,11 @@ class _LoanRequirementsStep extends StatelessWidget {
             error: state.validationErrors['tenure'],
             child: TextFormField(
               initialValue: state.formData['tenure']?.toString(),
-              onChanged: (v) => formCubit.updateField('tenure', int.tryParse(v)),
+              onChanged: (v) =>
+                  formCubit.updateField('tenure', int.tryParse(v)),
               keyboardType: TextInputType.number,
               inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              decoration: const InputDecoration(
-                hintText: '6 - 60 months',
-              ),
+              decoration: const InputDecoration(hintText: '6 - 60 months'),
             ),
           ),
           _FormField(
@@ -516,25 +500,30 @@ class _LoanRequirementsStep extends StatelessWidget {
             child: Wrap(
               spacing: 8,
               runSpacing: 8,
-              children: ['working_capital', 'equipment', 'expansion', 'inventory']
-                  .map((purpose) {
-                final isSelected = purposes.contains(purpose);
-                return FilterChip(
-                  label: Text(_getPurposeLabel(purpose)),
-                  selected: isSelected,
-                  onSelected: (_) {
-                    final updated = List<String>.from(purposes);
-                    if (isSelected) {
-                      updated.remove(purpose);
-                    } else {
-                      updated.add(purpose);
-                    }
-                    formCubit.updateField('purpose', updated);
-                  },
-                  selectedColor: AppColors.primary.withOpacity(0.2),
-                  checkmarkColor: AppColors.primary,
-                );
-              }).toList(),
+              children:
+                  [
+                    'working_capital',
+                    'equipment',
+                    'expansion',
+                    'inventory',
+                  ].map((purpose) {
+                    final isSelected = purposes.contains(purpose);
+                    return FilterChip(
+                      label: Text(_getPurposeLabel(purpose)),
+                      selected: isSelected,
+                      onSelected: (_) {
+                        final updated = List<String>.from(purposes);
+                        if (isSelected) {
+                          updated.remove(purpose);
+                        } else {
+                          updated.add(purpose);
+                        }
+                        formCubit.updateField('purpose', updated);
+                      },
+                      selectedColor: AppColors.primary.withOpacity(0.2),
+                      checkmarkColor: AppColors.primary,
+                    );
+                  }).toList(),
             ),
           ),
         ],
@@ -544,11 +533,16 @@ class _LoanRequirementsStep extends StatelessWidget {
 
   String _getPurposeLabel(String purpose) {
     switch (purpose) {
-      case 'working_capital': return 'Working Capital';
-      case 'equipment': return 'Equipment';
-      case 'expansion': return 'Expansion';
-      case 'inventory': return 'Inventory';
-      default: return purpose;
+      case 'working_capital':
+        return 'Working Capital';
+      case 'equipment':
+        return 'Equipment';
+      case 'expansion':
+        return 'Expansion';
+      case 'inventory':
+        return 'Inventory';
+      default:
+        return purpose;
     }
   }
 }
@@ -577,10 +571,22 @@ class _ReviewStep extends StatelessWidget {
             title: 'Business Details',
             onEdit: () => onEditStep(0),
             items: [
-              _ReviewItem('Business Name', state.formData['businessName']?.toString() ?? '-'),
-              _ReviewItem('Type', _getBusinessTypeLabel(state.formData['businessType'])),
-              _ReviewItem('Registration', state.formData['registrationNumber']?.toString() ?? '-'),
-              _ReviewItem('Years', '${state.formData['yearsInOperation'] ?? '-'} years'),
+              _ReviewItem(
+                'Business Name',
+                state.formData['businessName']?.toString() ?? '-',
+              ),
+              _ReviewItem(
+                'Type',
+                _getBusinessTypeLabel(state.formData['businessType']),
+              ),
+              _ReviewItem(
+                'Registration',
+                state.formData['registrationNumber']?.toString() ?? '-',
+              ),
+              _ReviewItem(
+                'Years',
+                '${state.formData['yearsInOperation'] ?? '-'} years',
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -588,9 +594,15 @@ class _ReviewStep extends StatelessWidget {
             title: 'Applicant Details',
             onEdit: () => onEditStep(1),
             items: [
-              _ReviewItem('Name', state.formData['applicantName']?.toString() ?? '-'),
+              _ReviewItem(
+                'Name',
+                state.formData['applicantName']?.toString() ?? '-',
+              ),
               _ReviewItem('PAN', state.formData['pan']?.toString() ?? '-'),
-              _ReviewItem('Aadhaar', _maskAadhaar(state.formData['aadhaar']?.toString())),
+              _ReviewItem(
+                'Aadhaar',
+                _maskAadhaar(state.formData['aadhaar']?.toString()),
+              ),
               _ReviewItem('Phone', '+91 ${state.formData['phone'] ?? '-'}'),
               _ReviewItem('Email', state.formData['email']?.toString() ?? '-'),
             ],
@@ -600,9 +612,18 @@ class _ReviewStep extends StatelessWidget {
             title: 'Loan Details',
             onEdit: () => onEditStep(2),
             items: [
-              _ReviewItem('Amount', '₹${state.formData['requestedAmount']?.toStringAsFixed(0) ?? '-'}'),
-              _ReviewItem('Tenure', '${state.formData['tenure'] ?? '-'} months'),
-              _ReviewItem('Purpose', (state.formData['purpose'] as List?)?.join(', ') ?? '-'),
+              _ReviewItem(
+                'Amount',
+                '₹${state.formData['requestedAmount']?.toStringAsFixed(0) ?? '-'}',
+              ),
+              _ReviewItem(
+                'Tenure',
+                '${state.formData['tenure'] ?? '-'} months',
+              ),
+              _ReviewItem(
+                'Purpose',
+                (state.formData['purpose'] as List?)?.join(', ') ?? '-',
+              ),
             ],
           ),
         ],
@@ -613,10 +634,14 @@ class _ReviewStep extends StatelessWidget {
   String _getBusinessTypeLabel(BusinessType? type) {
     if (type == null) return '-';
     switch (type) {
-      case BusinessType.soleProprietorship: return 'Sole Proprietorship';
-      case BusinessType.partnership: return 'Partnership';
-      case BusinessType.pvtLtd: return 'Private Limited';
-      case BusinessType.llp: return 'LLP';
+      case BusinessType.soleProprietorship:
+        return 'Sole Proprietorship';
+      case BusinessType.partnership:
+        return 'Partnership';
+      case BusinessType.pvtLtd:
+        return 'Private Limited';
+      case BusinessType.llp:
+        return 'LLP';
     }
   }
 
@@ -633,11 +658,7 @@ class _FormField extends StatelessWidget {
   final String? error;
   final Widget child;
 
-  const _FormField({
-    required this.label,
-    this.error,
-    required this.child,
-  });
+  const _FormField({required this.label, this.error, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -710,22 +731,27 @@ class _ReviewSection extends StatelessWidget {
             ],
           ),
           const Divider(),
-          ...items.map((item) => Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(item.label, style: TextStyle(color: AppColors.textSecondary)),
-                Flexible(
-                  child: Text(
-                    item.value,
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                    textAlign: TextAlign.end,
+          ...items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    item.label,
+                    style: TextStyle(color: AppColors.textSecondary),
                   ),
-                ),
-              ],
+                  Flexible(
+                    child: Text(
+                      item.value,
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                      textAlign: TextAlign.end,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -735,7 +761,6 @@ class _ReviewSection extends StatelessWidget {
 class _ReviewItem {
   final String label;
   final String value;
-  
+
   _ReviewItem(this.label, this.value);
 }
-

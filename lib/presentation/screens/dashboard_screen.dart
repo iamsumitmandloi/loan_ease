@@ -58,9 +58,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               _authBloc.add(Logout());
               this.context.go(Routes.login);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Logout'),
           ),
         ],
@@ -111,7 +109,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           if (state is DashboardLoading) {
             return const Center(child: CircularProgressIndicator());
           }
-          
+
           if (state is DashboardError) {
             return Center(
               child: Column(
@@ -129,7 +127,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             );
           }
-          
+
           if (state is DashboardLoaded) {
             return RefreshIndicator(
               onRefresh: _onRefresh,
@@ -143,11 +141,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     // Stats grid
                     _buildStatsGrid(state.stats),
                     const SizedBox(height: 24),
-                    
+
                     // Quick actions
                     _buildQuickActions(),
                     const SizedBox(height: 24),
-                    
+
                     // Loans by status breakdown
                     _buildStatusBreakdown(state.stats),
                   ],
@@ -155,15 +153,18 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
             );
           }
-          
+
           return const SizedBox.shrink();
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => context.push(Routes.newApplication),
         backgroundColor: AppColors.primary,
-        icon: const Icon(Icons.add),
-        label: const Text('New Application'),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text(
+          'New Application',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
@@ -308,16 +309,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Expanded(
                       child: Text(
                         item.label,
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                        ),
+                        style: TextStyle(color: AppColors.textSecondary),
                       ),
                     ),
                     Text(
                       '${item.count} (${item.percentage}%)',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
@@ -372,4 +369,3 @@ class _QuickActionButton extends StatelessWidget {
     );
   }
 }
-

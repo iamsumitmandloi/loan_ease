@@ -2,6 +2,8 @@
 
 Built a Loan Origination System (LOS) app that merges local offline data with a remote API.
 
+[**Watch Demo Video**](https://drive.google.com/file/d/1IHf0GOnrgocdiEJLSgSSKP7Hhybfwjwj/view?usp=sharing)
+
 ## Quick Start
 
 1.  **Setup**
