@@ -27,16 +27,24 @@ I used AI as a coding assistant to speed up mechanical tasks. All architecture d
 
 **AI Assisted**:
 - Generated initial Dart classes from JSON structure
-- Boilerplate for Hive TypeAdapters
+- Boilerplate for Hive TypeAdapters (via build_runner)
 - fromJson/toJson methods
 
 **Human Work**:
-- Added nullable field handling for optional fields
-- Designed enum mappings (status, businessType)
-- Modified for app-specific needs
-- Added documentation comments
+- Added nullable field handling for optional fields (approvedAmount, interestRate, etc.)
+- Designed enum mappings (LoanStatus, BusinessType) with proper Hive annotations
+- Added copyWith methods for immutable updates
+- Created helper classes (StatusOverrideData, DraftData, SessionModel)
+- Wrote API service error handling
 
 **Why I'm ok with this**: Model generation from JSON is mechanical. The JSON structure dictates the class shape. I verified all types and added business logic.
+
+**Files created**:
+- `loan_model.dart` - Main loan model with Hive annotations
+- `dashboard_model.dart` - Dashboard stats with nested models
+- `user_model.dart` - User profile and session
+- `api_service.dart` - Dio-based remote calls
+- `hive_service.dart` - Local storage operations
 
 ### Repository Layer (~30% AI, 70% Human)
 

@@ -6,12 +6,19 @@ import 'core/di.dart';
 import 'core/theme.dart';
 import 'core/router.dart';
 import 'core/constants.dart';
+import 'data/models/loan_model.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
   // Initialize Hive for local storage
   await Hive.initFlutter();
+  
+  // Register Hive adapters
+  Hive.registerAdapter(LoanStatusAdapter());
+  Hive.registerAdapter(BusinessTypeAdapter());
+  Hive.registerAdapter(LoanModelAdapter());
+  Hive.registerAdapter(StatusOverrideAdapter());
   
   // Open Hive boxes
   await Hive.openBox(HiveBoxes.localLoans);
