@@ -8,6 +8,7 @@ import '../presentation/screens/dashboard_screen.dart';
 import '../presentation/screens/loan_list_screen.dart';
 import '../presentation/screens/loan_form_screen.dart';
 import '../presentation/screens/loan_detail_screen.dart';
+import '../data/models/loan_model.dart';
 
 /// Route names as constants - prevents typos
 class Routes {
@@ -38,14 +39,15 @@ final appRouter = GoRouter(
         },
       ),
     ),
-    
+
     // Login screen
     GoRoute(
       path: Routes.login,
       name: 'login',
-      pageBuilder: (context, state) => _buildSlideTransition(state, const LoginScreen()),
+      pageBuilder: (context, state) =>
+          _buildSlideTransition(state, const LoginScreen()),
     ),
-    
+
     // OTP verification
     GoRoute(
       path: Routes.otp,
@@ -55,37 +57,43 @@ final appRouter = GoRouter(
         return _buildSlideTransition(state, OtpScreen(phone: phone));
       },
     ),
-    
+
     // Dashboard - main home screen
     GoRoute(
       path: Routes.dashboard,
       name: 'dashboard',
-      pageBuilder: (context, state) => _buildSlideTransition(
-        state,
-        const DashboardScreen(),
-      ),
+      pageBuilder: (context, state) =>
+          _buildSlideTransition(state, const DashboardScreen()),
     ),
-    
+
     // Loan list
     GoRoute(
       path: Routes.loanList,
       name: 'loanList',
-      pageBuilder: (context, state) => _buildSlideTransition(
-        state,
-        const LoanListScreen(),
-      ),
+      pageBuilder: (context, state) {
+        // Extract status from query parameters
+        final statusParam = state.uri.queryParameters['status'];
+        LoanStatus? initialStatus;
+
+        if (statusParam != null) {
+          initialStatus = _parseStatusFromString(statusParam);
+        }
+
+        return _buildSlideTransition(
+          state,
+          LoanListScreen(initialStatus: initialStatus),
+        );
+      },
     ),
-    
+
     // New application form - MUST come before :id route!
     GoRoute(
       path: Routes.newApplication,
       name: 'newApplication',
-      pageBuilder: (context, state) => _buildSlideTransition(
-        state,
-        const LoanFormScreen(),
-      ),
+      pageBuilder: (context, state) =>
+          _buildSlideTransition(state, const LoanFormScreen()),
     ),
-    
+
     // Loan detail with Hero animation
     GoRoute(
       path: '/loans/:id',
@@ -105,6 +113,24 @@ final appRouter = GoRouter(
   ],
 );
 
+/// Parse status string from query parameter to LoanStatus enum
+LoanStatus? _parseStatusFromString(String status) {
+  switch (status.toLowerCase()) {
+    case 'pending':
+      return LoanStatus.pending;
+    case 'approved':
+      return LoanStatus.approved;
+    case 'rejected':
+      return LoanStatus.rejected;
+    case 'under_review':
+      return LoanStatus.underReview;
+    case 'disbursed':
+      return LoanStatus.disbursed;
+    default:
+      return null;
+  }
+}
+
 /// Custom slide transition for page navigation
 /// This is our PAGE TRANSITION animation
 CustomTransitionPage<T> _buildSlideTransition<T>(
@@ -121,7 +147,7 @@ CustomTransitionPage<T> _buildSlideTransition<T>(
         parent: animation,
         curve: Curves.easeInOut,
       );
-      
+
       return SlideTransition(
         position: tween.animate(curvedAnimation),
         child: child,

@@ -19,6 +19,7 @@ class ApiConstants {
 /// Hive box names
 class HiveBoxes {
   static const String localLoans = 'local_loans';
+  static const String remoteLoans = 'remote_loans';
   static const String statusOverrides = 'status_overrides';
   static const String draft = 'draft';
   static const String session = 'session';

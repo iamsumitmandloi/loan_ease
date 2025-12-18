@@ -8,12 +8,13 @@ import '../../core/constants.dart';
 class HiveService {
   // Box references
   Box get _localLoansBox => Hive.box(HiveBoxes.localLoans);
+  Box get _remoteLoansBox => Hive.box(HiveBoxes.remoteLoans);
   Box get _statusOverridesBox => Hive.box(HiveBoxes.statusOverrides);
   Box get _draftBox => Hive.box(HiveBoxes.draft);
   Box get _sessionBox => Hive.box(HiveBoxes.session);
 
   // ==================== LOCAL LOANS ====================
-  
+
   /// Save a new loan application (created locally)
   Future<void> saveLocalLoan(LoanModel loan) async {
     await _localLoansBox.put(loan.id, loan.toJson());
@@ -36,14 +37,39 @@ class HiveService {
     await _localLoansBox.delete(id);
   }
 
+  // ==================== REMOTE LOANS ====================
+
+  /// Save remote loans (overwrite cache)
+  Future<void> saveRemoteLoans(List<LoanModel> loans) async {
+    // Clear existing remote loans first to ensure we don't keep stale ones
+    await _remoteLoansBox.clear();
+
+    final Map<String, dynamic> entries = {};
+    for (final loan in loans) {
+      entries[loan.id] = loan.toJson();
+    }
+    await _remoteLoansBox.putAll(entries);
+  }
+
+  /// Get all cached remote loans
+  List<LoanModel> getRemoteLoans() {
+    final loans = <LoanModel>[];
+    for (final key in _remoteLoansBox.keys) {
+      final json = _remoteLoansBox.get(key) as Map<dynamic, dynamic>;
+      final properJson = json.map((k, v) => MapEntry(k.toString(), v));
+      loans.add(_loanFromLocalJson(properJson));
+    }
+    return loans;
+  }
+
   // ==================== STATUS OVERRIDES ====================
-  
+
   /// Save a status override for a loan
   Future<void> saveStatusOverride(
-    String loanId, 
-    LoanStatus status, 
-    {String? reason}
-  ) async {
+    String loanId,
+    LoanStatus status, {
+    String? reason,
+  }) async {
     await _statusOverridesBox.put(loanId, {
       'status': status.index,
       'reason': reason,
@@ -54,7 +80,7 @@ class HiveService {
   /// Get all status overrides as a map
   Map<String, StatusOverrideData> getStatusOverrides() {
     final overrides = <String, StatusOverrideData>{};
-    
+
     for (final key in _statusOverridesBox.keys) {
       final data = _statusOverridesBox.get(key) as Map<dynamic, dynamic>;
       overrides[key.toString()] = StatusOverrideData(
@@ -63,7 +89,7 @@ class HiveService {
         timestamp: DateTime.parse(data['timestamp'] as String),
       );
     }
-    
+
     return overrides;
   }
 
@@ -71,7 +97,7 @@ class HiveService {
   StatusOverrideData? getStatusOverride(String loanId) {
     final data = _statusOverridesBox.get(loanId);
     if (data == null) return null;
-    
+
     final map = data as Map<dynamic, dynamic>;
     return StatusOverrideData(
       status: LoanStatus.values[map['status'] as int],
@@ -81,7 +107,7 @@ class HiveService {
   }
 
   // ==================== DRAFT ====================
-  
+
   /// Save form draft
   Future<void> saveDraft(int step, Map<String, dynamic> data) async {
     await _draftBox.put('current', {
@@ -95,7 +121,7 @@ class HiveService {
   DraftData? getDraft() {
     final data = _draftBox.get('current');
     if (data == null) return null;
-    
+
     final map = data as Map<dynamic, dynamic>;
     return DraftData(
       step: map['step'] as int,
@@ -110,7 +136,7 @@ class HiveService {
   }
 
   // ==================== SESSION ====================
-  
+
   /// Save user session
   Future<void> saveSession(SessionModel session) async {
     await _sessionBox.put('auth', session.toJson());
@@ -120,7 +146,7 @@ class HiveService {
   SessionModel getSession() {
     final data = _sessionBox.get('auth');
     if (data == null) return SessionModel.empty();
-    
+
     final map = data as Map<dynamic, dynamic>;
     final properMap = map.map((k, v) => MapEntry(k.toString(), v));
     return SessionModel.fromJson(properMap);
@@ -157,18 +183,18 @@ class HiveService {
       phone: json['phone'] as String,
       email: json['email'] as String,
       requestedAmount: (json['requestedAmount'] as num).toDouble(),
-      approvedAmount: json['approvedAmount'] != null 
-          ? (json['approvedAmount'] as num).toDouble() 
+      approvedAmount: json['approvedAmount'] != null
+          ? (json['approvedAmount'] as num).toDouble()
           : null,
       tenure: json['tenure'] as int,
-      interestRate: json['interestRate'] != null 
-          ? (json['interestRate'] as num).toDouble() 
+      interestRate: json['interestRate'] != null
+          ? (json['interestRate'] as num).toDouble()
           : null,
       purpose: List<String>.from(json['purpose'] as List),
       rejectionReason: json['rejectionReason'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      disbursementDate: json['disbursementDate'] != null 
+      disbursementDate: json['disbursementDate'] != null
           ? DateTime.parse(json['disbursementDate'] as String)
           : null,
       isLocal: json['isLocal'] as bool? ?? true,
@@ -210,10 +236,5 @@ class DraftData {
   final Map<String, dynamic> data;
   final DateTime savedAt;
 
-  DraftData({
-    required this.step,
-    required this.data,
-    required this.savedAt,
-  });
+  DraftData({required this.step, required this.data, required this.savedAt});
 }
-

@@ -11,47 +11,57 @@ import '../presentation/blocs/dashboard/dashboard_cubit.dart';
 import '../presentation/blocs/loan_list/loan_list_bloc.dart';
 import '../presentation/blocs/loan_form/loan_form_cubit.dart';
 import '../presentation/blocs/loan_detail/loan_detail_cubit.dart';
+import 'network/retry_interceptor.dart'; // Added import
 
 final getIt = GetIt.instance;
 
 /// Setup dependency injection
 /// Called once at app startup
 Future<void> setupDI() async {
-  // Dio client with logging
-  getIt.registerLazySingleton<Dio>(() {
-    final dio = Dio();
-    dio.options.connectTimeout = const Duration(seconds: 15);
-    dio.options.receiveTimeout = const Duration(seconds: 15);
-    
-    // Add logging in debug mode
-    dio.interceptors.add(LogInterceptor(
+  // Core - Dio HTTP client
+  final dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 15),
+      receiveTimeout: const Duration(seconds: 15),
+    ),
+  );
+
+  // Add retry interceptor for automatic retry with exponential backoff
+  dio.interceptors.add(
+    RetryInterceptor(
+      maxRetries: 3,
+      initialDelay: const Duration(milliseconds: 500),
+    ),
+  );
+
+  // Add logging interceptor in debug mode
+  dio.interceptors.add(
+    LogInterceptor(
       requestBody: true,
       responseBody: false, // Don't log large JSON responses
       error: true,
-    ));
-    
-    return dio;
-  });
-  
+    ),
+  );
+
+  getIt.registerSingleton<Dio>(dio);
+
   // Services
   getIt.registerLazySingleton<ApiService>(() => ApiService(getIt<Dio>()));
   getIt.registerLazySingleton<HiveService>(() => HiveService());
-  
+
   // Repositories
   getIt.registerLazySingleton<LoanRepository>(
     () => LoanRepository(getIt<ApiService>(), getIt<HiveService>()),
   );
   getIt.registerLazySingleton<DashboardRepository>(
-    () => DashboardRepository(getIt<ApiService>()),
+    () => DashboardRepository(getIt<LoanRepository>()),
   );
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepository(getIt<ApiService>(), getIt<HiveService>()),
   );
-  
+
   // BLoCs - registered as factory so we get fresh instances
-  getIt.registerFactory<AuthBloc>(
-    () => AuthBloc(getIt<AuthRepository>()),
-  );
+  getIt.registerFactory<AuthBloc>(() => AuthBloc(getIt<AuthRepository>()));
   getIt.registerFactory<DashboardCubit>(
     () => DashboardCubit(getIt<DashboardRepository>()),
   );

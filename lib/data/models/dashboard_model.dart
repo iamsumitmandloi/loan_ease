@@ -1,3 +1,5 @@
+import 'loan_model.dart';
+
 /// Dashboard statistics model
 /// Matches the API JSON structure
 class DashboardModel {
@@ -14,6 +16,7 @@ class DashboardModel {
   final List<MonthlyTrend> monthlyTrends;
   final List<LoansByPurpose> loansByPurpose;
   final List<LoansByBusinessType> loansByBusinessType;
+  final List<LoanModel> recentLoans;
 
   DashboardModel({
     required this.totalApplications,
@@ -29,11 +32,12 @@ class DashboardModel {
     required this.monthlyTrends,
     required this.loansByPurpose,
     required this.loansByBusinessType,
+    this.recentLoans = const [],
   });
 
   factory DashboardModel.fromJson(Map<String, dynamic> json) {
     final stats = json['dashboard_stats'] as Map<String, dynamic>;
-    
+
     return DashboardModel(
       totalApplications: stats['totalApplications'] as int,
       approvedApplications: stats['approvedApplications'] as int,
@@ -99,7 +103,7 @@ class LoansByPurpose {
       totalAmount: (json['totalAmount'] as num).toDouble(),
     );
   }
-  
+
   // Human readable purpose label
   String get label {
     switch (purpose) {
@@ -135,7 +139,7 @@ class LoansByBusinessType {
       percentage: json['percentage'] as int,
     );
   }
-  
+
   // Human readable type label
   String get label {
     switch (type) {
@@ -152,4 +156,3 @@ class LoansByBusinessType {
     }
   }
 }
-

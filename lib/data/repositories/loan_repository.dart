@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import '../models/loan_model.dart';
 import '../services/api_service.dart';
 import '../services/hive_service.dart';
-import '../../core/errors/api_exceptions.dart';
 
 /// Loan Repository - coordinates remote and local data
 /// This is where the merge magic happens
@@ -14,147 +13,63 @@ class LoanRepository {
 
   LoanRepository(this._apiService, this._hiveService);
 
-  /// Get all loans - merged from remote + local
-  /// Local status overrides take priority
-  Future<List<LoanModel>> getLoans() async {
-    try {
-      // 1. Fetch remote loans
-      final remoteLoans = await _apiService.getLoanApplications();
-
-      // 2. Get local-only loans (created in app)
-      final localLoans = _hiveService.getLocalLoans();
-
-      // 3. Get status overrides
-      final statusOverrides = _hiveService.getStatusOverrides();
-
-      // 4. Merge: remote + local apps
-      final allLoans = [...remoteLoans, ...localLoans];
-
-      // 5. Apply status overrides (local wins)
-      final mergedLoans = allLoans.map((loan) {
-        final override = statusOverrides[loan.id];
-        if (override != null) {
-          return loan.copyWith(
-            status: override.status,
-            updatedAt: override.timestamp,
-            rejectionReason: override.reason,
-          );
-        }
-        return loan;
-      }).toList();
-
-      // 6. Sort by updatedAt (newest first)
-      mergedLoans.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-
-      return mergedLoans;
-    } on NetworkException catch (e) {
-      // Network errors: fallback to local data, but log the issue
-      if (kDebugMode) {
-        debugPrint('⚠️ Network error fetching loans: ${e.message}');
-        debugPrint('   Falling back to local data only');
-      }
-
-      final localLoans = _hiveService.getLocalLoans();
-      final statusOverrides = _hiveService.getStatusOverrides();
-
-      return localLoans.map((loan) {
-        final override = statusOverrides[loan.id];
-        if (override != null) {
-          return loan.copyWith(
-            status: override.status,
-            updatedAt: override.timestamp,
-          );
-        }
-        return loan;
-      }).toList();
-    } on ParseException catch (e) {
-      // Parse errors: can't recover, but log details
-      if (kDebugMode) {
-        debugPrint('❌ Parse error fetching loans: ${e.message}');
-        if (e.field != null) {
-          debugPrint('   Field: ${e.field}');
-        }
-        if (e.endpoint != null) {
-          debugPrint('   Endpoint: ${e.endpoint}');
-        }
-      }
-      // Re-throw parse errors - they indicate data corruption
-      rethrow;
-    } on ServerException catch (e) {
-      // Server errors: fallback to local, but log
-      if (kDebugMode) {
-        debugPrint('⚠️ Server error (${e.statusCode}): ${e.message}');
-        debugPrint('   Falling back to local data only');
-      }
-
-      final localLoans = _hiveService.getLocalLoans();
-      final statusOverrides = _hiveService.getStatusOverrides();
-
-      return localLoans.map((loan) {
-        final override = statusOverrides[loan.id];
-        if (override != null) {
-          return loan.copyWith(
-            status: override.status,
-            updatedAt: override.timestamp,
-          );
-        }
-        return loan;
-      }).toList();
-    } on ApiException catch (e) {
-      // Other API errors: fallback to local
-      if (kDebugMode) {
-        debugPrint('⚠️ API error fetching loans: ${e.message}');
-        debugPrint('   Falling back to local data only');
-      }
-
-      final localLoans = _hiveService.getLocalLoans();
-      final statusOverrides = _hiveService.getStatusOverrides();
-
-      return localLoans.map((loan) {
-        final override = statusOverrides[loan.id];
-        if (override != null) {
-          return loan.copyWith(
-            status: override.status,
-            updatedAt: override.timestamp,
-          );
-        }
-        return loan;
-      }).toList();
-    }
+  /// Sync remote loans - fetch from API and save to local cache
+  Future<void> syncRemoteLoans() async {
+    final remoteLoans = await _apiService.getLoanApplications();
+    await _hiveService.saveRemoteLoans(remoteLoans);
   }
 
-  /// Get a single loan by ID
+  /// Get cached loans - merged from remote cache + local data
+  /// Reads ONLY from Hive. No network calls.
+  /// Used by both Dashboard and Loan List.
+  List<LoanModel> getCachedLoans() {
+    // 1. Get cached remote loans
+    final remoteLoans = _hiveService.getRemoteLoans();
+
+    // 2. Get local-only loans
+    final localLoans = _hiveService.getLocalLoans();
+
+    // 3. Get status overrides
+    final statusOverrides = _hiveService.getStatusOverrides();
+
+    // 4. Merge: remote + local apps
+    final allLoans = [...remoteLoans, ...localLoans];
+
+    // 5. Apply status overrides (local wins)
+    final mergedLoans = allLoans.map((loan) {
+      final override = statusOverrides[loan.id];
+      if (override != null) {
+        return loan.copyWith(
+          status: override.status,
+          updatedAt: override.timestamp,
+          rejectionReason: override.reason,
+        );
+      }
+      return loan;
+    }).toList();
+
+    // 6. Sort by updatedAt (newest first)
+    mergedLoans.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+
+    return mergedLoans;
+  }
+
+  /// Get loans - alias for getCachedLoans to maintain backward compatibility
+  /// The BLoC still awaits this, so we wrap in Future
+  Future<List<LoanModel>> getLoans() async {
+    return getCachedLoans();
+  }
+
+  /// Get a single loan by ID from cache
   Future<LoanModel?> getLoanById(String id) async {
     try {
-      final loans = await getLoans();
-      try {
-        return loans.firstWhere((l) => l.id == id);
-      } catch (_) {
-        // Loan not found in merged list
-        if (kDebugMode) {
-          debugPrint('ℹ️ Loan with ID "$id" not found');
-        }
-        return null;
-      }
-    } on ParseException {
-      // Re-throw parse errors - they're critical
-      rethrow;
-    } catch (e) {
-      // For other errors, try to get from local only
+      final loans = getCachedLoans();
+      return loans.firstWhere((l) => l.id == id);
+    } catch (_) {
       if (kDebugMode) {
-        debugPrint('⚠️ Error fetching loan $id: ${e.toString()}');
-        debugPrint('   Attempting to fetch from local storage only');
+        debugPrint('ℹ️ Loan with ID "$id" not found in cache');
       }
-
-      try {
-        final localLoans = _hiveService.getLocalLoans();
-        return localLoans.firstWhere(
-          (l) => l.id == id,
-          orElse: () => throw StateError('Not found'),
-        );
-      } catch (_) {
-        return null;
-      }
+      return null;
     }
   }
 

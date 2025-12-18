@@ -12,7 +12,9 @@ import '../widgets/loan_card.dart';
 /// Loan list screen with search, filter, sort, and swipe actions
 /// Implements: Staggered animation, Swipe actions
 class LoanListScreen extends StatefulWidget {
-  const LoanListScreen({super.key});
+  final LoanStatus? initialStatus;
+
+  const LoanListScreen({super.key, this.initialStatus});
 
   @override
   State<LoanListScreen> createState() => _LoanListScreenState();
@@ -28,6 +30,12 @@ class _LoanListScreenState extends State<LoanListScreen> {
     super.initState();
     _loanListBloc = getIt<LoanListBloc>();
     _loanListBloc.add(LoadLoans());
+
+    // Auto-apply filter if navigated from Dashboard with a specific status
+    if (widget.initialStatus != null) {
+      _showFilters = true; // Show filter chips by default
+      _loanListBloc.add(FilterByStatus({widget.initialStatus!}));
+    }
   }
 
   @override
@@ -67,10 +75,12 @@ class _LoanListScreenState extends State<LoanListScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _loanListBloc.add(UpdateLoanStatus(
-                loanId: loan.id,
-                newStatus: LoanStatus.approved,
-              ));
+              _loanListBloc.add(
+                UpdateLoanStatus(
+                  loanId: loan.id,
+                  newStatus: LoanStatus.approved,
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.approved,
@@ -84,7 +94,7 @@ class _LoanListScreenState extends State<LoanListScreen> {
 
   void _rejectLoan(LoanModel loan) {
     final reasonController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -113,13 +123,15 @@ class _LoanListScreenState extends State<LoanListScreen> {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              _loanListBloc.add(UpdateLoanStatus(
-                loanId: loan.id,
-                newStatus: LoanStatus.rejected,
-                reason: reasonController.text.isNotEmpty 
-                    ? reasonController.text 
-                    : 'Rejected by loan officer',
-              ));
+              _loanListBloc.add(
+                UpdateLoanStatus(
+                  loanId: loan.id,
+                  newStatus: LoanStatus.rejected,
+                  reason: reasonController.text.isNotEmpty
+                      ? reasonController.text
+                      : 'Rejected by loan officer',
+                ),
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.rejected,
@@ -143,7 +155,9 @@ class _LoanListScreenState extends State<LoanListScreen> {
         title: const Text('Loan Applications'),
         actions: [
           IconButton(
-            icon: Icon(_showFilters ? Icons.filter_list_off : Icons.filter_list),
+            icon: Icon(
+              _showFilters ? Icons.filter_list_off : Icons.filter_list,
+            ),
             onPressed: () => setState(() => _showFilters = !_showFilters),
           ),
         ],
@@ -178,14 +192,14 @@ class _LoanListScreenState extends State<LoanListScreen> {
               ),
             ),
           ),
-          
+
           // Filter chips (animated visibility)
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             height: _showFilters ? 60 : 0,
             child: _showFilters ? _buildFilterChips() : null,
           ),
-          
+
           // Loan list
           Expanded(
             child: BlocBuilder<LoanListBloc, LoanListState>(
@@ -194,13 +208,17 @@ class _LoanListScreenState extends State<LoanListScreen> {
                 if (state.isLoading && state.loans.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
                 }
-                
+
                 if (state.error != null && state.loans.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                        Icon(
+                          Icons.error_outline,
+                          size: 48,
+                          color: AppColors.error,
+                        ),
                         const SizedBox(height: 16),
                         Text(state.error!),
                         const SizedBox(height: 16),
@@ -212,16 +230,21 @@ class _LoanListScreenState extends State<LoanListScreen> {
                     ),
                   );
                 }
-                
+
                 if (state.filteredLoans.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.inbox_outlined, size: 64, color: AppColors.textSecondary),
+                        Icon(
+                          Icons.inbox_outlined,
+                          size: 64,
+                          color: AppColors.textSecondary,
+                        ),
                         const SizedBox(height: 16),
                         Text(
-                          state.searchQuery.isNotEmpty || state.statusFilters.isNotEmpty
+                          state.searchQuery.isNotEmpty ||
+                                  state.statusFilters.isNotEmpty
                               ? 'No loans match your filters'
                               : 'No loan applications yet',
                           style: TextStyle(color: AppColors.textSecondary),
@@ -230,7 +253,7 @@ class _LoanListScreenState extends State<LoanListScreen> {
                     ),
                   );
                 }
-                
+
                 return RefreshIndicator(
                   onRefresh: () async {
                     _loanListBloc.add(RefreshLoans());
@@ -241,7 +264,7 @@ class _LoanListScreenState extends State<LoanListScreen> {
                       itemCount: state.filteredLoans.length,
                       itemBuilder: (context, index) {
                         final loan = state.filteredLoans[index];
-                        
+
                         return AnimationConfiguration.staggeredList(
                           position: index,
                           duration: const Duration(milliseconds: 375),
@@ -286,7 +309,9 @@ class _LoanListScreenState extends State<LoanListScreen> {
                   selectedColor: _getStatusColor(status).withOpacity(0.2),
                   checkmarkColor: _getStatusColor(status),
                   labelStyle: TextStyle(
-                    color: isSelected ? _getStatusColor(status) : AppColors.textSecondary,
+                    color: isSelected
+                        ? _getStatusColor(status)
+                        : AppColors.textSecondary,
                   ),
                 ),
               );
@@ -299,16 +324,17 @@ class _LoanListScreenState extends State<LoanListScreen> {
 
   Widget _buildSlidableLoanCard(LoanModel loan) {
     // Only allow swipe actions for pending/under_review loans
-    final canTakeAction = loan.status == LoanStatus.pending || 
-                          loan.status == LoanStatus.underReview;
-    
+    final canTakeAction =
+        loan.status == LoanStatus.pending ||
+        loan.status == LoanStatus.underReview;
+
     if (!canTakeAction) {
       return LoanCard(
         loan: loan,
         onTap: () => context.push('/loans/${loan.id}'),
       );
     }
-    
+
     return Slidable(
       key: ValueKey(loan.id),
       startActionPane: ActionPane(
@@ -320,7 +346,9 @@ class _LoanListScreenState extends State<LoanListScreen> {
             foregroundColor: Colors.white,
             icon: Icons.check,
             label: 'Approve',
-            borderRadius: const BorderRadius.horizontal(left: Radius.circular(12)),
+            borderRadius: const BorderRadius.horizontal(
+              left: Radius.circular(12),
+            ),
           ),
         ],
       ),
@@ -333,7 +361,9 @@ class _LoanListScreenState extends State<LoanListScreen> {
             foregroundColor: Colors.white,
             icon: Icons.close,
             label: 'Reject',
-            borderRadius: const BorderRadius.horizontal(right: Radius.circular(12)),
+            borderRadius: const BorderRadius.horizontal(
+              right: Radius.circular(12),
+            ),
           ),
         ],
       ),
@@ -346,22 +376,31 @@ class _LoanListScreenState extends State<LoanListScreen> {
 
   String _getStatusLabel(LoanStatus status) {
     switch (status) {
-      case LoanStatus.pending: return 'Pending';
-      case LoanStatus.underReview: return 'Under Review';
-      case LoanStatus.approved: return 'Approved';
-      case LoanStatus.rejected: return 'Rejected';
-      case LoanStatus.disbursed: return 'Disbursed';
+      case LoanStatus.pending:
+        return 'Pending';
+      case LoanStatus.underReview:
+        return 'Under Review';
+      case LoanStatus.approved:
+        return 'Approved';
+      case LoanStatus.rejected:
+        return 'Rejected';
+      case LoanStatus.disbursed:
+        return 'Disbursed';
     }
   }
 
   Color _getStatusColor(LoanStatus status) {
     switch (status) {
-      case LoanStatus.pending: return AppColors.pending;
-      case LoanStatus.underReview: return AppColors.underReview;
-      case LoanStatus.approved: return AppColors.approved;
-      case LoanStatus.rejected: return AppColors.rejected;
-      case LoanStatus.disbursed: return AppColors.disbursed;
+      case LoanStatus.pending:
+        return AppColors.pending;
+      case LoanStatus.underReview:
+        return AppColors.underReview;
+      case LoanStatus.approved:
+        return AppColors.approved;
+      case LoanStatus.rejected:
+        return AppColors.rejected;
+      case LoanStatus.disbursed:
+        return AppColors.disbursed;
     }
   }
 }
-
