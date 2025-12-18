@@ -6,6 +6,11 @@ import '../data/services/hive_service.dart';
 import '../data/repositories/loan_repository.dart';
 import '../data/repositories/dashboard_repository.dart';
 import '../data/repositories/auth_repository.dart';
+import '../presentation/blocs/auth/auth_bloc.dart';
+import '../presentation/blocs/dashboard/dashboard_cubit.dart';
+import '../presentation/blocs/loan_list/loan_list_bloc.dart';
+import '../presentation/blocs/loan_form/loan_form_cubit.dart';
+import '../presentation/blocs/loan_detail/loan_detail_cubit.dart';
 
 final getIt = GetIt.instance;
 
@@ -43,6 +48,20 @@ Future<void> setupDI() async {
     () => AuthRepository(getIt<ApiService>(), getIt<HiveService>()),
   );
   
-  // BLoCs will be registered in Phase 4 as factories
-  // getIt.registerFactory<DashboardCubit>(() => DashboardCubit(...));
+  // BLoCs - registered as factory so we get fresh instances
+  getIt.registerFactory<AuthBloc>(
+    () => AuthBloc(getIt<AuthRepository>()),
+  );
+  getIt.registerFactory<DashboardCubit>(
+    () => DashboardCubit(getIt<DashboardRepository>()),
+  );
+  getIt.registerFactory<LoanListBloc>(
+    () => LoanListBloc(getIt<LoanRepository>()),
+  );
+  getIt.registerFactory<LoanFormCubit>(
+    () => LoanFormCubit(getIt<LoanRepository>()),
+  );
+  getIt.registerFactory<LoanDetailCubit>(
+    () => LoanDetailCubit(getIt<LoanRepository>()),
+  );
 }

@@ -70,6 +70,14 @@ I used AI as a coding assistant to speed up mechanical tasks. All architecture d
 - Designed state shapes for each feature
 - Implemented actual business logic in blocs
 - Error state handling
+- Form validation logic in LoanFormCubit
+
+**BLoCs created**:
+- `AuthBloc` - login flow with OTP
+- `DashboardCubit` - simple fetch/display
+- `LoanListBloc` - complex filtering/sorting/status updates
+- `LoanFormCubit` - multi-step wizard with validation
+- `LoanDetailCubit` - single loan view with approve/reject
 
 ### UI Components (~50% AI, 50% Human)
 
