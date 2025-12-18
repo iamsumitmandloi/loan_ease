@@ -99,31 +99,47 @@ This is the critical part. We have:
 
 ### Merge Logic (Repository Layer)
 
+**Implementation in `loan_repository.dart`:**
+
 ```dart
-List<LoanApplication> getMergedLoans() {
-  // 1. Get remote loans
-  final remoteLoans = await apiService.getLoans();
+Future<List<LoanModel>> getLoans() async {
+  // 1. Fetch remote loans from API
+  final remoteLoans = await _apiService.getLoanApplications();
   
-  // 2. Get local-only loans (created in app)
-  final localLoans = hiveService.getLocalLoans();
+  // 2. Get local-only loans (created in app, id starts with 'local_')
+  final localLoans = _hiveService.getLocalLoans();
   
-  // 3. Get status overrides
-  final statusOverrides = hiveService.getStatusOverrides();
+  // 3. Get status overrides (approve/reject actions stored locally)
+  final statusOverrides = _hiveService.getStatusOverrides();
   
-  // 4. Combine remote + local
+  // 4. Combine remote + local apps
   final allLoans = [...remoteLoans, ...localLoans];
   
-  // 5. Apply status overrides (local wins)
-  for (final loan in allLoans) {
-    if (statusOverrides.containsKey(loan.id)) {
-      loan.status = statusOverrides[loan.id].status;
-      loan.updatedAt = statusOverrides[loan.id].timestamp;
+  // 5. Apply status overrides - LOCAL WINS
+  final mergedLoans = allLoans.map((loan) {
+    final override = statusOverrides[loan.id];
+    if (override != null) {
+      return loan.copyWith(
+        status: override.status,
+        updatedAt: override.timestamp,
+        rejectionReason: override.reason,
+      );
     }
-  }
+    return loan;
+  }).toList();
   
-  return allLoans;
+  // 6. Sort by newest first
+  mergedLoans.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
+  
+  return mergedLoans;
 }
 ```
+
+**Key Points:**
+- Local apps have ID prefix `local_` to distinguish from remote
+- Status overrides are keyed by loan ID
+- If remote fetch fails, fallback to local-only data
+- copyWith() ensures immutability
 
 ### Hive Box Schema
 

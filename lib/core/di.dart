@@ -3,6 +3,9 @@ import 'package:dio/dio.dart';
 
 import '../data/services/api_service.dart';
 import '../data/services/hive_service.dart';
+import '../data/repositories/loan_repository.dart';
+import '../data/repositories/dashboard_repository.dart';
+import '../data/repositories/auth_repository.dart';
 
 final getIt = GetIt.instance;
 
@@ -29,8 +32,16 @@ Future<void> setupDI() async {
   getIt.registerLazySingleton<ApiService>(() => ApiService(getIt<Dio>()));
   getIt.registerLazySingleton<HiveService>(() => HiveService());
   
-  // Repositories will be registered in Phase 3
-  // getIt.registerLazySingleton<LoanRepository>(() => LoanRepository(...));
+  // Repositories
+  getIt.registerLazySingleton<LoanRepository>(
+    () => LoanRepository(getIt<ApiService>(), getIt<HiveService>()),
+  );
+  getIt.registerLazySingleton<DashboardRepository>(
+    () => DashboardRepository(getIt<ApiService>()),
+  );
+  getIt.registerLazySingleton<AuthRepository>(
+    () => AuthRepository(getIt<ApiService>(), getIt<HiveService>()),
+  );
   
   // BLoCs will be registered in Phase 4 as factories
   // getIt.registerFactory<DashboardCubit>(() => DashboardCubit(...));
