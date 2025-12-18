@@ -1,7 +1,5 @@
 # Architecture & Design Decisions
 
-This document tracks the technical decisions I made while building LoanEase. Given the 24-hour timeframe (and roughly 3 hours of focused coding), I prioritized simplicity and specialized features over a full-blown enterprise architecture.
-
 ## High-Level structure
 
 I've used a standard Flutter folder structure but simplified the Clean Architecture layers a bit:
