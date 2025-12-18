@@ -22,6 +22,10 @@ The requirements was local updates override remote status.
 
 This keeps the UI simple—it just asks for `getLoans()` and gets a unified list. It doesn't know or care where the data came from.
 
+## Offline-First Dashboard
+
+Dashboard loads cached data instantly, syncs in background—if sync fails, user sees cached data + error snackbar.
+
 ## Error Handling & Retry Logic
 
 **Automatic Retry with Exponential Backoff:**
