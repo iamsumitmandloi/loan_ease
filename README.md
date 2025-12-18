@@ -2,7 +2,7 @@
 
 Built a Loan Origination System (LOS) app that merges local offline data with a remote API.
 
-[**Watch Demo Video**](https://drive.google.com/file/d/1IHf0GOnrgocdiEJLSgSSKP7Hhybfwjwj/view?usp=sharing)
+[**Watch Demo Video**](https://drive.google.com/file/d/1OBdwy7GtAoEnTdmDgjuqnUk8UDozOEGd/view?usp=sharing)
 
 ## Quick Start
 
@@ -27,10 +27,5 @@ Built a Loan Origination System (LOS) app that merges local offline data with a 
 ## Key Files to Check
 *   `lib/data/repositories/loan_repository.dart` -> **This is where the merge logic lives.**
 *   `lib/presentation/blocs/loan_list/loan_list_bloc.dart` -> Handles the search/filter/sort mess.
-
-
-
-
-https://github.com/user-attachments/assets/62aceee2-3121-459d-a150-3061757cd346
 
 
