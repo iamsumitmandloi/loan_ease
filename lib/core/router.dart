@@ -7,6 +7,7 @@ import '../presentation/screens/otp_screen.dart';
 import '../presentation/screens/dashboard_screen.dart';
 import '../presentation/screens/loan_list_screen.dart';
 import '../presentation/screens/loan_form_screen.dart';
+import '../presentation/screens/loan_detail_screen.dart';
 
 /// Route names as constants - prevents typos
 class Routes {
@@ -75,15 +76,19 @@ final appRouter = GoRouter(
       ),
     ),
     
-    // Loan detail (TODO)
+    // Loan detail with Hero animation
     GoRoute(
       path: '/loans/:id',
       name: 'loanDetail',
       pageBuilder: (context, state) {
         final id = state.pathParameters['id']!;
-        return _buildSlideTransition(
-          state,
-          Scaffold(body: Center(child: Text('Loan Detail: $id - TODO'))),
+        return CustomTransitionPage(
+          key: state.pageKey,
+          child: LoanDetailScreen(loanId: id),
+          transitionDuration: const Duration(milliseconds: 400),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            return FadeTransition(opacity: animation, child: child);
+          },
         );
       },
     ),
