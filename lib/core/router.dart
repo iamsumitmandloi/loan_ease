@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
-// Import screens (will add as we create them)
-// import '../presentation/screens/splash_screen.dart';
+import '../presentation/screens/splash_screen.dart';
+import '../presentation/screens/login_screen.dart';
+import '../presentation/screens/otp_screen.dart';
 
 /// Route names as constants - prevents typos
 class Routes {
@@ -21,94 +22,102 @@ final appRouter = GoRouter(
   initialLocation: Routes.splash,
   debugLogDiagnostics: true,
   routes: [
-    // Splash - entry point
+    // Splash - entry point with animated logo
     GoRoute(
       path: Routes.splash,
       name: 'splash',
-      builder: (context, state) => const Scaffold(
-        body: Center(child: Text('Splash - TODO')),
+      pageBuilder: (context, state) => CustomTransitionPage(
+        key: state.pageKey,
+        child: const SplashScreen(),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          return FadeTransition(opacity: animation, child: child);
+        },
       ),
     ),
     
-    // Auth routes
+    // Login screen
     GoRoute(
       path: Routes.login,
       name: 'login',
-      builder: (context, state) => const Scaffold(
-        body: Center(child: Text('Login - TODO')),
-      ),
+      pageBuilder: (context, state) => _buildSlideTransition(state, const LoginScreen()),
     ),
+    
+    // OTP verification
     GoRoute(
       path: Routes.otp,
       name: 'otp',
-      builder: (context, state) {
+      pageBuilder: (context, state) {
         final phone = state.extra as String? ?? '';
-        return Scaffold(
-          body: Center(child: Text('OTP for $phone - TODO')),
+        return _buildSlideTransition(state, OtpScreen(phone: phone));
+      },
+    ),
+    
+    // Dashboard - main home screen (TODO)
+    GoRoute(
+      path: Routes.dashboard,
+      name: 'dashboard',
+      pageBuilder: (context, state) => _buildSlideTransition(
+        state,
+        const Scaffold(body: Center(child: Text('Dashboard - TODO'))),
+      ),
+    ),
+    
+    // Loan list (TODO)
+    GoRoute(
+      path: Routes.loanList,
+      name: 'loanList',
+      pageBuilder: (context, state) => _buildSlideTransition(
+        state,
+        const Scaffold(body: Center(child: Text('Loan List - TODO'))),
+      ),
+    ),
+    
+    // Loan detail (TODO)
+    GoRoute(
+      path: '/loans/:id',
+      name: 'loanDetail',
+      pageBuilder: (context, state) {
+        final id = state.pathParameters['id']!;
+        return _buildSlideTransition(
+          state,
+          Scaffold(body: Center(child: Text('Loan Detail: $id - TODO'))),
         );
       },
     ),
     
-    // Main app routes
-    GoRoute(
-      path: Routes.dashboard,
-      name: 'dashboard',
-      builder: (context, state) => const Scaffold(
-        body: Center(child: Text('Dashboard - TODO')),
-      ),
-    ),
-    GoRoute(
-      path: Routes.loanList,
-      name: 'loanList',
-      builder: (context, state) => const Scaffold(
-        body: Center(child: Text('Loan List - TODO')),
-      ),
-    ),
-    GoRoute(
-      path: '/loans/:id',
-      name: 'loanDetail',
-      builder: (context, state) {
-        final id = state.pathParameters['id']!;
-        return Scaffold(
-          body: Center(child: Text('Loan Detail: $id - TODO')),
-        );
-      },
-    ),
+    // New application form (TODO)
     GoRoute(
       path: Routes.newApplication,
       name: 'newApplication',
-      builder: (context, state) => const Scaffold(
-        body: Center(child: Text('New Application - TODO')),
+      pageBuilder: (context, state) => _buildSlideTransition(
+        state,
+        const Scaffold(body: Center(child: Text('New Application - TODO'))),
       ),
     ),
   ],
-  
-  // Custom page transitions
-  // Will add slide/fade animations here
 );
 
-/// Custom page transition for a slide effect
-/// Using this for most screen transitions
-CustomTransitionPage<T> buildPageWithSlideTransition<T>({
-  required BuildContext context,
-  required GoRouterState state,
-  required Widget child,
-}) {
+/// Custom slide transition for page navigation
+/// This is our PAGE TRANSITION animation
+CustomTransitionPage<T> _buildSlideTransition<T>(
+  GoRouterState state,
+  Widget child,
+) {
   return CustomTransitionPage<T>(
     key: state.pageKey,
     child: child,
+    transitionDuration: const Duration(milliseconds: 300),
     transitionsBuilder: (context, animation, secondaryAnimation, child) {
+      final tween = Tween(begin: const Offset(1.0, 0.0), end: Offset.zero);
+      final curvedAnimation = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeInOut,
+      );
+      
       return SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(1.0, 0.0),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(
-          parent: animation,
-          curve: Curves.easeInOut,
-        )),
+        position: tween.animate(curvedAnimation),
         child: child,
       );
     },
   );
 }
-

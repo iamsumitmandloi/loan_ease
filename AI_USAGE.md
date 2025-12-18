@@ -92,6 +92,11 @@ I used AI as a coding assistant to speed up mechanical tasks. All architecture d
 - Color scheme and theming
 - UX decisions (what goes where)
 
+**Auth screens created**:
+- `SplashScreen` - EXPLICIT animation with AnimationController (scale + fade)
+- `LoginScreen` - phone input with validation
+- `OtpScreen` - auto-focus fields, countdown timer, auto-verify
+
 ---
 
 ## Prompts Used (Examples)
