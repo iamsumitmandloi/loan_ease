@@ -75,11 +75,11 @@ class LoanFormCubit extends Cubit<LoanFormState> {
         if (state.formData['businessType'] == null) {
           errors['businessType'] = 'Select business type';
         }
-        if ((state.formData['registrationNumber'] as String?)?.isEmpty ?? true) {
-          errors['registrationNumber'] = 'Registration number is required';
+        if (!_isValidRegistrationNumber(state.formData['registrationNumber'] as String?)) {
+          errors['registrationNumber'] = 'Invalid registration number (min 6 alphanumeric)';
         }
-        if (state.formData['yearsInOperation'] == null) {
-          errors['yearsInOperation'] = 'Years in operation is required';
+        if (!_isValidYearsInOperation(state.formData['yearsInOperation'] as int?)) {
+          errors['yearsInOperation'] = 'Years must be between 0 and 100';
         }
         break;
         
@@ -172,23 +172,38 @@ class LoanFormCubit extends Cubit<LoanFormState> {
   // Validation helpers
   bool _isValidPan(String? pan) {
     if (pan == null || pan.isEmpty) return false;
+    // PAN format: 5 letters + 4 digits + 1 letter (e.g., ABCDE1234F)
     return RegExp(r'^[A-Z]{5}[0-9]{4}[A-Z]$').hasMatch(pan.toUpperCase());
   }
 
   bool _isValidAadhaar(String? aadhaar) {
     if (aadhaar == null) return false;
     final digits = aadhaar.replaceAll(RegExp(r'[^0-9]'), '');
-    return digits.length == 12;
+    // Aadhaar: 12 digits, cannot start with 0 or 1
+    return digits.length == 12 && RegExp(r'^[2-9]').hasMatch(digits);
   }
 
   bool _isValidPhone(String? phone) {
     if (phone == null || phone.isEmpty) return false;
+    // Indian mobile: starts with 6-9, total 10 digits
     return RegExp(r'^[6-9]\d{9}$').hasMatch(phone);
   }
 
   bool _isValidEmail(String? email) {
     if (email == null || email.isEmpty) return false;
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
+  }
+
+  bool _isValidRegistrationNumber(String? regNo) {
+    if (regNo == null || regNo.isEmpty) return false;
+    // Basic validation: at least 6 characters alphanumeric
+    return regNo.length >= 6 && RegExp(r'^[A-Z0-9]+$').hasMatch(regNo.toUpperCase());
+  }
+
+  bool _isValidYearsInOperation(int? years) {
+    if (years == null) return false;
+    // Must be between 0 and 100 years
+    return years >= 0 && years <= 100;
   }
 }
 

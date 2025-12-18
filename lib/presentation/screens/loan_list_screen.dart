@@ -136,6 +136,10 @@ class _LoanListScreenState extends State<LoanListScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () => context.pop(),
+        ),
         title: const Text('Loan Applications'),
         actions: [
           IconButton(

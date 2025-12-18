@@ -28,7 +28,7 @@ class StatCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -42,24 +42,25 @@ class StatCard extends StatelessWidget {
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
           children: [
             // Icon with background
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: color.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
-              child: Icon(icon, color: color, size: 24),
+              child: Icon(icon, color: color, size: 20),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 10),
             
             // Value with animation
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: isLoading
                   ? Container(
-                      height: 28,
+                      height: 24,
                       width: 60,
                       decoration: BoxDecoration(
                         color: AppColors.divider,
@@ -69,22 +70,24 @@ class StatCard extends StatelessWidget {
                   : Text(
                       value,
                       key: ValueKey(value),
-                      style: TextStyle(
-                        fontSize: 24,
+                      style: const TextStyle(
+                        fontSize: 22,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 2),
             
             // Title
             Text(
               title,
-              style: TextStyle(
-                fontSize: 13,
+              style: const TextStyle(
+                fontSize: 12,
                 color: AppColors.textSecondary,
               ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
@@ -132,4 +135,3 @@ class AmountStatCard extends StatelessWidget {
     );
   }
 }
-

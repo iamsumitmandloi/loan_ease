@@ -42,8 +42,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _logout() {
-    _authBloc.add(Logout());
-    context.go(Routes.login);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout'),
+        content: const Text('Are you sure you want to logout?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _authBloc.add(Logout());
+              this.context.go(Routes.login);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+            ),
+            child: const Text('Logout'),
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -53,10 +75,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
       appBar: AppBar(
         title: const Text('Dashboard'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
-          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert),
             onSelected: (value) {
@@ -169,7 +187,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 12,
           crossAxisSpacing: 12,
-          childAspectRatio: 1.3,
+          childAspectRatio: 1.2,
           children: [
             StatCard(
               title: 'Total Applications',

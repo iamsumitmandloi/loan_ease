@@ -76,6 +76,16 @@ final appRouter = GoRouter(
       ),
     ),
     
+    // New application form - MUST come before :id route!
+    GoRoute(
+      path: Routes.newApplication,
+      name: 'newApplication',
+      pageBuilder: (context, state) => _buildSlideTransition(
+        state,
+        const LoanFormScreen(),
+      ),
+    ),
+    
     // Loan detail with Hero animation
     GoRoute(
       path: '/loans/:id',
@@ -91,16 +101,6 @@ final appRouter = GoRouter(
           },
         );
       },
-    ),
-    
-    // New application form
-    GoRoute(
-      path: Routes.newApplication,
-      name: 'newApplication',
-      pageBuilder: (context, state) => _buildSlideTransition(
-        state,
-        const LoanFormScreen(),
-      ),
     ),
   ],
 );
