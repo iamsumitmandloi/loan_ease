@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import '../models/loan_model.dart';
 import '../models/dashboard_model.dart';
@@ -6,18 +7,34 @@ import '../../core/constants.dart';
 
 /// API Service - handles all remote data fetching
 /// All endpoints are GET only (static JSON files)
+/// Note: Gist returns text/plain, so we manually parse JSON
 class ApiService {
   final Dio _dio;
 
   ApiService(this._dio);
 
+  /// Parse response - handles both String and Map responses
+  /// Gist URLs return text/plain content-type, so Dio doesn't auto-parse
+  Map<String, dynamic> _parseResponse(dynamic data) {
+    if (data is String) {
+      return jsonDecode(data) as Map<String, dynamic>;
+    } else if (data is Map<String, dynamic>) {
+      return data;
+    } else {
+      throw ApiException('Invalid response format');
+    }
+  }
+
   /// Fetch dashboard statistics
   Future<DashboardModel> getDashboardStats() async {
     try {
       final response = await _dio.get(ApiConstants.dashboardStats);
-      return DashboardModel.fromJson(response.data as Map<String, dynamic>);
+      final data = _parseResponse(response.data);
+      return DashboardModel.fromJson(data);
     } on DioException catch (e) {
       throw _handleError(e);
+    } catch (e) {
+      throw ApiException('Failed to parse dashboard data: $e');
     }
   }
 
@@ -25,7 +42,7 @@ class ApiService {
   Future<List<LoanModel>> getLoanApplications() async {
     try {
       final response = await _dio.get(ApiConstants.loanApplications);
-      final data = response.data as Map<String, dynamic>;
+      final data = _parseResponse(response.data);
       final applications = data['loan_applications'] as List;
       
       return applications
@@ -33,6 +50,8 @@ class ApiService {
           .toList();
     } on DioException catch (e) {
       throw _handleError(e);
+    } catch (e) {
+      throw ApiException('Failed to parse loan data: $e');
     }
   }
 
@@ -40,9 +59,12 @@ class ApiService {
   Future<UserModel> getUserProfile() async {
     try {
       final response = await _dio.get(ApiConstants.userProfile);
-      return UserModel.fromJson(response.data as Map<String, dynamic>);
+      final data = _parseResponse(response.data);
+      return UserModel.fromJson(data);
     } on DioException catch (e) {
       throw _handleError(e);
+    } catch (e) {
+      throw ApiException('Failed to parse user data: $e');
     }
   }
 
@@ -72,4 +94,3 @@ class ApiException implements Exception {
   @override
   String toString() => message;
 }
-
