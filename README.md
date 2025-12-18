@@ -1,38 +1,27 @@
-# LoanEase
+# LoanEase Assignment
 
-A Flutter-based Loan Origination System (LOS) demo app for the Senior Engineer assessment.
+Built a Loan Origination System (LOS) app that merges local offline data with a remote API.
 
-## Features
+## Quick Start
 
-*   **Hybrid Data**: Merges offline local data with remote API data seamlessly.
-*   **Animation Heavy**: Custom animations for Splash, Lists, and Details.
-*   **Clean Architecture**: Separation of concerns using BLoC pattern.
-*   **Offline First**: Works without internet (uses cached/local data).
-
-## Getting Started
-
-1.  **Setup**:
+1.  **Setup**
     ```bash
     flutter pub get
     dart run build_runner build --delete-conflicting-outputs
     ```
 
-2.  **Run**:
+2.  **Run**
     ```bash
     flutter run
     ```
+    *(Tested on Android Emulator Pixel 6, API 33)*
 
-## Testing
+## What's Inside?
 
-Run the included test suite:
-```bash
-flutter test
-```
+*   **Hybrid Sync**: The app works offline. It loads API data first, then overlays any local "drafts" or "status updates" from Hive.
+*   **Animations**: Check the Splash screen (custom controller) and the Loan List (staggered entry).
+*   **Architecture**: standard Clean Arch + BLoC.
 
-## Structure
-
-*   `lib/data`: Merging logic and Hive storage.
-*   `lib/presentation`: UI and BLoCs.
-*   `lib/core`: Config and Utilities.
-
-For more details on the technical choices, check `ARCHITECTURE.md`.
+## Key Files to Check
+*   `lib/data/repositories/loan_repository.dart` -> **This is where the merge logic lives.**
+*   `lib/presentation/blocs/loan_list/loan_list_bloc.dart` -> Handles the search/filter/sort mess.
