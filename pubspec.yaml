@@ -1,0 +1,53 @@
+name: money
+description: "LoanEase - MSME Loan Origination System"
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  
+  # State Management
+  flutter_bloc: ^8.1.6
+  equatable: ^2.0.7
+  
+  # Dependency Injection
+  get_it: ^8.0.3
+  
+  # Network
+  dio: ^5.7.0
+  
+  # Local Storage
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  
+  # Routing
+  go_router: ^14.6.2
+  
+  # Animations
+  flutter_staggered_animations: ^1.1.1
+  
+  # UI Components
+  flutter_slidable: ^3.1.1
+  shimmer: ^3.0.0
+  
+  # Utils
+  intl: ^0.19.0
+  uuid: ^4.5.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+  hive_generator: ^2.0.1
+  build_runner: ^2.4.15
+
+flutter:
+  uses-material-design: true
+  
+  assets:
+    - assets/images/
