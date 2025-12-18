@@ -1,8 +1,9 @@
 # LoanEase Assignment
 
 short video -
+https://github.com/user-attachments/assets/ac30bfad-6adf-4791-8f3d-229e89e8a4fa
 
-https://github.com/user-attachments/assets/f341d0f4-5f5a-47d9-8a6f-e3a716d5d58b
+
 
 
 
