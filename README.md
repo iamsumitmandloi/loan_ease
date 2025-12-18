@@ -1,5 +1,11 @@
 # LoanEase Assignment
 
+short video -
+
+https://github.com/user-attachments/assets/f341d0f4-5f5a-47d9-8a6f-e3a716d5d58b
+
+
+
 Built a Loan Origination System (LOS) app that merges local offline data with a remote API.
 
 [**Watch Demo Video**](https://drive.google.com/file/d/1OBdwy7GtAoEnTdmDgjuqnUk8UDozOEGd/view?usp=sharing)
