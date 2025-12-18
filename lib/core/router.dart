@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../presentation/screens/splash_screen.dart';
 import '../presentation/screens/login_screen.dart';
 import '../presentation/screens/otp_screen.dart';
+import '../presentation/screens/dashboard_screen.dart';
 
 /// Route names as constants - prevents typos
 class Routes {
@@ -52,13 +53,13 @@ final appRouter = GoRouter(
       },
     ),
     
-    // Dashboard - main home screen (TODO)
+    // Dashboard - main home screen
     GoRoute(
       path: Routes.dashboard,
       name: 'dashboard',
       pageBuilder: (context, state) => _buildSlideTransition(
         state,
-        const Scaffold(body: Center(child: Text('Dashboard - TODO'))),
+        const DashboardScreen(),
       ),
     ),
     
