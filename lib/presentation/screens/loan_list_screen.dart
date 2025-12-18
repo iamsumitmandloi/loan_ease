@@ -8,7 +8,6 @@ import '../../core/theme.dart';
 import '../../data/models/loan_model.dart';
 import '../blocs/loan_list/loan_list_bloc.dart';
 import '../widgets/loan_card.dart';
-import '../widgets/status_badge.dart';
 
 /// Loan list screen with search, filter, sort, and swipe actions
 /// Implements: Staggered animation, Swipe actions

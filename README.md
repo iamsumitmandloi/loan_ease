@@ -5,7 +5,7 @@ A Flutter mobile application for managing MSME (Micro, Small & Medium Enterprise
 ## Features
 
 - **Authentication**: Phone + OTP based login (mock OTP - any 6 digits work)
-- **Dashboard**: Real-time statistics with animated counters
+- **Dashboard**: Real-time statistics with animated stat cards
 - **Loan Management**: View, search, filter, and manage loan applications
 - **New Applications**: Multi-step form wizard with draft saving
 - **Offline Support**: Local storage for new apps and status updates
@@ -28,7 +28,13 @@ Clean Architecture with 3 main layers:
 lib/
 ├── core/           # Constants, DI, Theme, Router
 ├── data/           # Models, Services, Repositories
+│   ├── models/
+│   ├── services/
+│   └── repositories/
 └── presentation/   # BLoCs, Screens, Widgets
+    ├── blocs/
+    ├── screens/
+    └── widgets/
 ```
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed explanation.
@@ -44,7 +50,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed explanation.
    flutter pub get
    ```
 
-3. **Generate Hive adapters** (if needed)
+3. **Generate Hive adapters**
    ```bash
    flutter pub run build_runner build
    ```
@@ -63,9 +69,9 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for detailed explanation.
 
 All data fetched from static JSON files (GET only):
 
-- Dashboard Stats: [gist link]
-- Loan Applications: [gist link]  
-- User Profile: [gist link]
+- Dashboard Stats: [gist link](https://gist.githubusercontent.com/rishimalgwa/4d3d4d0e8e270f4ba8af64a3d4099e5c/raw/)
+- Loan Applications: [gist link](https://gist.githubusercontent.com/rishimalgwa/d8edc5edadb4e1e06cec67c8748c1939/raw/)
+- User Profile: [gist link](https://gist.githubusercontent.com/rishimalgwa/5b598c4b5744fd1aa0714d8216398e53/raw/)
 
 ## Data Flow
 
@@ -79,18 +85,26 @@ Status changes: stored in status_overrides box
 Display: remote + local apps, local status wins
 ```
 
-## Animations Implemented
+## Animations Implemented (6 Types)
 
-1. **Implicit**: Stat card transitions (AnimatedContainer)
-2. **Explicit**: Splash logo scale + fade (AnimationController)
-3. **Hero**: List card to detail screen
-4. **Page Transitions**: Custom slide transitions
-5. **Staggered**: Loan list items
-6. **Micro-interactions**: Button feedback, loading states
+| # | Type | Implementation | Location |
+|---|------|---------------|----------|
+| 1 | **Implicit** | AnimatedContainer, AnimatedSwitcher | Stat cards, loading states |
+| 2 | **Explicit** | AnimationController + Scale/Fade | Splash screen logo |
+| 3 | **Hero** | Hero widget | Card → Detail transition |
+| 4 | **Page Transition** | CustomTransitionPage + SlideTransition | All route changes |
+| 5 | **Staggered** | flutter_staggered_animations | Loan list items |
+| 6 | **Micro-interactions** | Material InkWell, button feedback | All tap targets |
 
-## Screenshots
+## Screens
 
-<!-- TODO: Add screenshots after UI is complete -->
+- **Splash**: Animated logo with auth check
+- **Login**: Phone input with validation
+- **OTP**: 6-digit auto-focus fields with countdown
+- **Dashboard**: Stats grid, quick actions, business type breakdown
+- **Loan List**: Search, filter chips, swipe actions, staggered list
+- **Loan Detail**: Hero header, collapsible sections, timeline, approve/reject
+- **New Application**: 4-step wizard with progress indicator, draft saving
 
 ## Known Limitations
 
@@ -106,6 +120,7 @@ Display: remote + local apps, local status wins
 - Add dark mode support
 - Real pagination with backend support
 - Biometric authentication
+- Better error boundary widgets
 
 ## AI Usage
 
@@ -117,11 +132,30 @@ See [AI_USAGE.md](AI_USAGE.md) for detailed disclosure of AI tool usage.
 |-------|------|
 | Planning & Data Analysis | 15 min |
 | Setup & Architecture | 15 min |
-| Data Layer | 25 min |
-| State Management | 25 min |
-| UI & Animations | 50 min |
-| Polish & Docs | 15 min |
-| **Total** | **~2.5 hours** |
+| Data Layer (Models, Services) | 25 min |
+| Repository (Merge Logic) | 20 min |
+| State Management (BLoCs) | 25 min |
+| Auth Screens | 15 min |
+| Dashboard Screen | 15 min |
+| Loan List Screen | 20 min |
+| Loan Form Screen | 20 min |
+| Loan Detail Screen | 15 min |
+| Polish & Documentation | 15 min |
+| **Total** | **~3 hours** |
+
+## Commit History
+
+10 commits following conventional commit format:
+1. `chore: project setup with initial docs`
+2. `feat(data): add models and data services`
+3. `feat(data): implement repositories with merge logic`
+4. `feat(bloc): add state management`
+5. `feat(auth): add splash and auth screens`
+6. `feat(dashboard): add dashboard with animated stats`
+7. `feat(loans): implement loan list with filters`
+8. `feat(form): add multi-step application form`
+9. `feat(detail): add loan detail with timeline`
+10. `docs: finalize documentation`
 
 ---
 

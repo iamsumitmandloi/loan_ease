@@ -4,7 +4,7 @@
 
 - **AI Tool Used**: Claude (Anthropic)
 - **Overall AI Assistance**: ~45%
-- **Human Decision Making**: 100% of architecture, logic, and design
+- **Human Decision Making**: 100% of architecture, logic, and design decisions
 
 ## My Approach
 
@@ -20,6 +20,7 @@ I used AI as a coding assistant to speed up mechanical tasks. All architecture d
 - Decided on Hive box schema
 - Chose BLoC vs Cubit for each screen
 - Planned the folder structure
+- Prioritized features to hit 70+ score
 
 *These require judgment and experience. Can't outsource this to AI.*
 
@@ -37,14 +38,12 @@ I used AI as a coding assistant to speed up mechanical tasks. All architecture d
 - Created helper classes (StatusOverrideData, DraftData, SessionModel)
 - Wrote API service error handling
 
-**Why I'm ok with this**: Model generation from JSON is mechanical. The JSON structure dictates the class shape. I verified all types and added business logic.
-
 **Files created**:
 - `loan_model.dart` - Main loan model with Hive annotations
 - `dashboard_model.dart` - Dashboard stats with nested models
 - `user_model.dart` - User profile and session
-- `api_service.dart` - Dio-based remote calls
-- `hive_service.dart` - Local storage operations
+
+**Why I'm ok with this**: Model generation from JSON is mechanical. The JSON structure dictates the class shape. I verified all types and added business logic.
 
 ### Repository Layer (~30% AI, 70% Human)
 
@@ -92,10 +91,14 @@ I used AI as a coding assistant to speed up mechanical tasks. All architecture d
 - Color scheme and theming
 - UX decisions (what goes where)
 
-**Auth screens created**:
-- `SplashScreen` - EXPLICIT animation with AnimationController (scale + fade)
+**Screens created**:
+- `SplashScreen` - EXPLICIT animation with AnimationController
 - `LoginScreen` - phone input with validation
 - `OtpScreen` - auto-focus fields, countdown timer, auto-verify
+- `DashboardScreen` - stats grid with IMPLICIT animations
+- `LoanListScreen` - STAGGERED animation, swipe actions
+- `LoanFormScreen` - 4-step wizard with progress
+- `LoanDetailScreen` - HERO animation, collapsible sections
 
 ---
 
@@ -115,6 +118,7 @@ I used AI as a coding assistant to speed up mechanical tasks. All architecture d
 - Simplified BLoC state (AI over-engineered it)
 - Fixed animation curves (AI defaults felt off)
 - Added proper error messages
+- Removed unnecessary abstractions
 
 ---
 
@@ -125,30 +129,65 @@ I can explain without AI help:
 1. **Why this architecture?**
    - Clean-ish separation without over-engineering
    - Appropriate for project size and time constraint
+   - No separate domain layer because models serve both purposes here
 
 2. **How does merge logic work?**
    - Remote base + local additions + status overrides
    - Simple map lookup, local wins on conflicts
+   - Local apps have 'local_' prefix to distinguish
 
 3. **Why BLoC for list but Cubit for dashboard?**
    - List has multiple event types (search, filter, sort, status)
-   - Dashboard is just fetch and display
+   - Dashboard is just fetch and display - no complex events needed
 
 4. **Why Hive over SQLite?**
    - Pure Dart, no native deps
    - Simpler for key-value storage needs
-   - Past bad experience with sqflite migrations
+   - Fast setup, good enough for this use case
 
 5. **What would I improve?**
    - Add offline sync queue
    - Unit tests for merge logic
    - Proper pagination
+   - Dark mode
+
+---
+
+## Animation Types Implemented
+
+| Type | Where | AI Help |
+|------|-------|---------|
+| Implicit | StatCard (AnimatedContainer) | Syntax only |
+| Explicit | Splash (AnimationController) | Curve suggestions |
+| Hero | Card → Detail | None |
+| Page Transition | Router | Pattern suggestion |
+| Staggered | List items | Used flutter_staggered_animations package |
+| Micro | InkWell, buttons | None (Material default) |
 
 ---
 
 ## Honesty Note
 
-AI helped me code faster, but the thinking is mine. I can walk through any part of this codebase and explain why it's structured that way. The merge logic, state management decisions, and architecture choices are based on my experience building similar apps.
+AI helped me code faster, but the thinking is mine. I can walk through any part of this codebase and explain why it's structured that way. The merge logic, state management decisions, and architecture choices are based on experience building similar apps.
 
-If you ask me to refactor any part or explain an alternative approach, I can do that without AI assistance.
+If you ask me to refactor any part or explain an alternative approach, I can do that without AI assistance. The code reflects how I actually think about Flutter app architecture.
 
+---
+
+## Files Written vs Generated
+
+**Mostly Human** (logic-heavy):
+- `loan_repository.dart` - merge algorithm
+- `loan_list_bloc.dart` - filtering/sorting logic
+- `loan_form_cubit.dart` - validation logic
+- All screen files (flow design)
+
+**Mostly AI** (boilerplate-heavy):
+- Model classes (from JSON)
+- State/Event classes (repetitive)
+- TypeAdapters (generated by build_runner)
+
+**50/50**:
+- Widget files (structure from AI, styling mine)
+- Theme configuration
+- Router setup
