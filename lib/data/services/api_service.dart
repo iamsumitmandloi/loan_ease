@@ -4,6 +4,7 @@ import '../models/loan_model.dart';
 import '../models/dashboard_model.dart';
 import '../models/user_model.dart';
 import '../../core/constants.dart';
+import '../../core/errors/api_exceptions.dart';
 
 /// API Service - handles all remote data fetching
 /// All endpoints are GET only (static JSON files)
@@ -15,82 +16,286 @@ class ApiService {
 
   /// Parse response - handles both String and Map responses
   /// Gist URLs return text/plain content-type, so Dio doesn't auto-parse
-  Map<String, dynamic> _parseResponse(dynamic data) {
-    if (data is String) {
-      return jsonDecode(data) as Map<String, dynamic>;
-    } else if (data is Map<String, dynamic>) {
-      return data;
-    } else {
-      throw ApiException('Invalid response format');
+  Map<String, dynamic> _parseResponse(dynamic data, String endpoint) {
+    try {
+      if (data is String) {
+        if (data.isEmpty) {
+          throw ParseException(
+            'Empty response from server',
+            endpoint: endpoint,
+            field: 'response body',
+          );
+        }
+        return jsonDecode(data) as Map<String, dynamic>;
+      } else if (data is Map<String, dynamic>) {
+        return data;
+      } else {
+        throw ParseException(
+          'Invalid response format: expected JSON object, got ${data.runtimeType}',
+          endpoint: endpoint,
+          field: 'response body',
+          expectedType: 'Map<String, dynamic>',
+        );
+      }
+    } on FormatException catch (e) {
+      throw ParseException(
+        'Invalid JSON format: ${e.message}',
+        endpoint: endpoint,
+        originalError: e,
+        field: 'response body',
+      );
+    } on TypeError catch (e) {
+      throw ParseException(
+        'Type error during parsing: ${e.toString()}',
+        endpoint: endpoint,
+        originalError: e,
+      );
     }
   }
 
   /// Fetch dashboard statistics
   Future<DashboardModel> getDashboardStats() async {
+    final endpoint = ApiConstants.dashboardStats;
     try {
-      final response = await _dio.get(ApiConstants.dashboardStats);
-      final data = _parseResponse(response.data);
+      final response = await _dio.get(endpoint);
+      final data = _parseResponse(response.data, endpoint);
+      
+      // Validate required structure
+      if (!data.containsKey('dashboard_stats')) {
+        throw ParseException(
+          'Missing required field: dashboard_stats',
+          endpoint: endpoint,
+          field: 'dashboard_stats',
+        );
+      }
+      
       return DashboardModel.fromJson(data);
+    } on ParseException {
+      rethrow;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw _handleDioError(e, endpoint);
+    } on FormatException catch (e) {
+      throw ParseException(
+        'Failed to parse dashboard data: ${e.message}',
+        endpoint: endpoint,
+        originalError: e,
+      );
     } catch (e) {
-      throw ApiException('Failed to parse dashboard data: $e');
+      throw UnknownApiException(
+        'Unexpected error while fetching dashboard stats: ${e.toString()}',
+        endpoint: endpoint,
+        originalError: e,
+      );
     }
   }
 
   /// Fetch all loan applications from remote
   Future<List<LoanModel>> getLoanApplications() async {
+    final endpoint = ApiConstants.loanApplications;
     try {
-      final response = await _dio.get(ApiConstants.loanApplications);
-      final data = _parseResponse(response.data);
-      final applications = data['loan_applications'] as List;
+      final response = await _dio.get(endpoint);
+      final data = _parseResponse(response.data, endpoint);
       
-      return applications
-          .map((json) => LoanModel.fromJson(json as Map<String, dynamic>))
-          .toList();
+      // Validate required structure
+      if (!data.containsKey('loan_applications')) {
+        throw ParseException(
+          'Missing required field: loan_applications',
+          endpoint: endpoint,
+          field: 'loan_applications',
+        );
+      }
+      
+      final applications = data['loan_applications'];
+      if (applications is! List) {
+        throw ParseException(
+          'loan_applications must be a list, got ${applications.runtimeType}',
+          endpoint: endpoint,
+          field: 'loan_applications',
+          expectedType: 'List',
+        );
+      }
+      
+      final loans = <LoanModel>[];
+      for (var i = 0; i < applications.length; i++) {
+        try {
+          final json = applications[i];
+          if (json is! Map<String, dynamic>) {
+            throw ParseException(
+              'Loan application at index $i must be a map, got ${json.runtimeType}',
+              endpoint: endpoint,
+              field: 'loan_applications[$i]',
+              expectedType: 'Map<String, dynamic>',
+            );
+          }
+          loans.add(LoanModel.fromJson(json));
+        } catch (e) {
+          if (e is ParseException) rethrow;
+          throw ParseException(
+            'Failed to parse loan application at index $i: ${e.toString()}',
+            endpoint: endpoint,
+            field: 'loan_applications[$i]',
+            originalError: e,
+          );
+        }
+      }
+      
+      return loans;
+    } on ParseException {
+      rethrow;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw _handleDioError(e, endpoint);
     } catch (e) {
-      throw ApiException('Failed to parse loan data: $e');
+      if (e is ApiException) rethrow;
+      throw UnknownApiException(
+        'Unexpected error while fetching loan applications: ${e.toString()}',
+        endpoint: endpoint,
+        originalError: e,
+      );
     }
   }
 
   /// Fetch user profile
   Future<UserModel> getUserProfile() async {
+    final endpoint = ApiConstants.userProfile;
     try {
-      final response = await _dio.get(ApiConstants.userProfile);
-      final data = _parseResponse(response.data);
+      final response = await _dio.get(endpoint);
+      final data = _parseResponse(response.data, endpoint);
       return UserModel.fromJson(data);
+    } on ParseException {
+      rethrow;
     } on DioException catch (e) {
-      throw _handleError(e);
+      throw _handleDioError(e, endpoint);
+    } on FormatException catch (e) {
+      throw ParseException(
+        'Failed to parse user profile data: ${e.message}',
+        endpoint: endpoint,
+        originalError: e,
+      );
     } catch (e) {
-      throw ApiException('Failed to parse user data: $e');
+      if (e is ApiException) rethrow;
+      throw UnknownApiException(
+        'Unexpected error while fetching user profile: ${e.toString()}',
+        endpoint: endpoint,
+        originalError: e,
+      );
     }
   }
 
-  /// Convert Dio errors to readable messages
-  ApiException _handleError(DioException e) {
+  /// Convert Dio errors to specific exception types
+  ApiException _handleDioError(DioException e, String endpoint) {
+    final statusCode = e.response?.statusCode;
+    
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
+        return NetworkException(
+          'Connection timeout. The server took too long to respond.',
+          endpoint: endpoint,
+          originalError: e,
+        );
+        
       case DioExceptionType.sendTimeout:
+        return NetworkException(
+          'Request timeout. Failed to send data to server.',
+          endpoint: endpoint,
+          originalError: e,
+        );
+        
       case DioExceptionType.receiveTimeout:
-        return ApiException('Connection timeout. Please try again.');
+        return NetworkException(
+          'Response timeout. Server took too long to send data.',
+          endpoint: endpoint,
+          originalError: e,
+        );
+        
       case DioExceptionType.connectionError:
-        return ApiException('No internet connection.');
+        return NetworkException(
+          'No internet connection. Please check your network and try again.',
+          endpoint: endpoint,
+          originalError: e,
+        );
+        
       case DioExceptionType.badResponse:
-        return ApiException('Server error: ${e.response?.statusCode}');
+        if (statusCode != null) {
+          if (statusCode >= 500) {
+            return ServerException(
+              'Server error ($statusCode). Please try again later.',
+              endpoint: endpoint,
+              statusCode: statusCode,
+              originalError: e,
+            );
+          } else if (statusCode == 404) {
+            return ClientException(
+              'Resource not found (404). The requested data is not available.',
+              endpoint: endpoint,
+              statusCode: statusCode,
+              originalError: e,
+            );
+          } else if (statusCode == 401 || statusCode == 403) {
+            return ClientException(
+              'Authentication error ($statusCode). Please login again.',
+              endpoint: endpoint,
+              statusCode: statusCode,
+              originalError: e,
+            );
+          } else {
+            return ClientException(
+              'Client error ($statusCode). ${_extractErrorMessage(e.response?.data)}',
+              endpoint: endpoint,
+              statusCode: statusCode,
+              originalError: e,
+            );
+          }
+        }
+        return UnknownApiException(
+          'Bad response from server',
+          endpoint: endpoint,
+          originalError: e,
+        );
+        
+      case DioExceptionType.cancel:
+        return NetworkException(
+          'Request was cancelled',
+          endpoint: endpoint,
+          originalError: e,
+        );
+        
+      case DioExceptionType.badCertificate:
+        return NetworkException(
+          'SSL certificate error. Please check your connection.',
+          endpoint: endpoint,
+          originalError: e,
+        );
+        
       default:
-        return ApiException('Something went wrong. Please try again.');
+        return UnknownApiException(
+          'Network error: ${e.message ?? 'Unknown error occurred'}',
+          endpoint: endpoint,
+          originalError: e,
+        );
     }
   }
-}
 
-/// Custom exception for API errors
-class ApiException implements Exception {
-  final String message;
-  
-  ApiException(this.message);
-  
-  @override
-  String toString() => message;
+  /// Extract error message from response data
+  String _extractErrorMessage(dynamic data) {
+    if (data == null) return '';
+    if (data is Map) {
+      return data['message']?.toString() ?? 
+             data['error']?.toString() ?? 
+             '';
+    }
+    if (data is String) {
+      try {
+        final json = jsonDecode(data);
+        if (json is Map) {
+          return json['message']?.toString() ?? 
+                 json['error']?.toString() ?? 
+                 '';
+        }
+      } catch (_) {
+        // Not JSON, return as is
+        return data;
+      }
+    }
+    return '';
+  }
 }

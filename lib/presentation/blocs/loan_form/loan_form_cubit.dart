@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../data/models/loan_model.dart';
 import '../../../data/repositories/loan_repository.dart';
+import '../../../core/errors/api_exceptions.dart';
 
 part 'loan_form_state.dart';
 
@@ -150,10 +151,25 @@ class LoanFormCubit extends Cubit<LoanFormState> {
         isSubmitting: false,
         isSubmitted: true,
       ));
+    } on NetworkException catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        submitError: e.message,
+      ));
+    } on ServerException catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        submitError: e.message,
+      ));
+    } on ApiException catch (e) {
+      emit(state.copyWith(
+        isSubmitting: false,
+        submitError: e.message,
+      ));
     } catch (e) {
       emit(state.copyWith(
         isSubmitting: false,
-        submitError: 'Failed to submit application',
+        submitError: 'Failed to submit application. Please try again.',
       ));
     }
   }

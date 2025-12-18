@@ -2,7 +2,7 @@ import 'package:bloc_test/bloc_test.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:money/presentation/blocs/dashboard/dashboard_cubit.dart';
 import 'package:money/data/models/dashboard_model.dart';
-import 'package:money/data/services/api_service.dart';
+import 'package:money/core/errors/api_exceptions.dart';
 import '../mocks/mocks.dart';
 
 void main() {
@@ -50,7 +50,7 @@ void main() {
       'loadDashboard emits DashboardLoading then DashboardError on failure',
       build: () {
         when(() => mockRepository.getDashboardStats())
-            .thenThrow(ApiException('Network error'));
+            .thenThrow(NetworkException('Network error'));
         return DashboardCubit(mockRepository);
       },
       act: (cubit) => cubit.loadDashboard(),
@@ -75,7 +75,7 @@ void main() {
       'refresh emits DashboardError on failure',
       build: () {
         when(() => mockRepository.getDashboardStats())
-            .thenThrow(ApiException('Network error'));
+            .thenThrow(NetworkException('Network error'));
         return DashboardCubit(mockRepository);
       },
       act: (cubit) => cubit.refresh(),

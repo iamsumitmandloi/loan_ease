@@ -1,6 +1,8 @@
+import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/api_service.dart';
 import '../services/hive_service.dart';
+import '../../core/errors/api_exceptions.dart';
 
 /// Auth Repository - handles authentication
 /// OTP is mocked - any 6 digits work
@@ -49,7 +51,32 @@ class AuthRepository {
 
   /// Get user profile from remote
   Future<UserModel> getUserProfile() async {
-    return await _apiService.getUserProfile();
+    try {
+      return await _apiService.getUserProfile();
+    } on ParseException catch (e) {
+      if (kDebugMode) {
+        debugPrint('❌ Parse error fetching user profile: ${e.message}');
+        if (e.field != null) {
+          debugPrint('   Field: ${e.field}');
+        }
+      }
+      rethrow;
+    } on NetworkException catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Network error fetching user profile: ${e.message}');
+      }
+      rethrow;
+    } on ClientException catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ Client error (${e.statusCode}): ${e.message}');
+      }
+      rethrow;
+    } on ApiException catch (e) {
+      if (kDebugMode) {
+        debugPrint('⚠️ API error fetching user profile: ${e.message}');
+      }
+      rethrow;
+    }
   }
 
   /// Logout - clear session

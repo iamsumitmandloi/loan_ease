@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:equatable/equatable.dart';
 import '../../../data/models/loan_model.dart';
 import '../../../data/repositories/loan_repository.dart';
+import '../../../core/errors/api_exceptions.dart';
 
 part 'loan_list_event.dart';
 part 'loan_list_state.dart';
@@ -36,10 +37,27 @@ class LoanListBloc extends Bloc<LoanListEvent, LoanListState> {
         loans: loans,
         filteredLoans: _applyFilters(loans, state.searchQuery, state.statusFilters),
       ));
-    } catch (e) {
+    } on ParseException {
+      // Parse errors are critical - show error
       emit(state.copyWith(
         isLoading: false,
-        error: 'Failed to load loans',
+        error: 'Data format error. Please contact support.',
+      ));
+    } on NetworkException catch (e) {
+      // Network errors - show message, but loans might be loaded from local
+      emit(state.copyWith(
+        isLoading: false,
+        error: e.message,
+      ));
+    } on ApiException catch (e) {
+      emit(state.copyWith(
+        isLoading: false,
+        error: e.message,
+      ));
+    } catch (_) {
+      emit(state.copyWith(
+        isLoading: false,
+        error: 'Failed to load loans. Please try again.',
       ));
     }
   }
@@ -56,8 +74,15 @@ class LoanListBloc extends Bloc<LoanListEvent, LoanListState> {
         filteredLoans: _applyFilters(loans, state.searchQuery, state.statusFilters),
         error: null,
       ));
-    } catch (e) {
-      emit(state.copyWith(error: 'Failed to refresh'));
+    } on NetworkException catch (e) {
+      // On network error, might still have local data
+      emit(state.copyWith(error: e.message));
+    } on ParseException {
+      emit(state.copyWith(error: 'Data format error. Please contact support.'));
+    } on ApiException catch (e) {
+      emit(state.copyWith(error: e.message));
+    } catch (_) {
+      emit(state.copyWith(error: 'Failed to refresh. Please try again.'));
     }
   }
 
@@ -130,8 +155,12 @@ class LoanListBloc extends Bloc<LoanListEvent, LoanListState> {
       
       // Refresh the list to reflect changes
       add(RefreshLoans());
+    } on NetworkException catch (e) {
+      emit(state.copyWith(error: e.message));
+    } on ApiException catch (e) {
+      emit(state.copyWith(error: e.message));
     } catch (e) {
-      emit(state.copyWith(error: 'Failed to update status'));
+      emit(state.copyWith(error: 'Failed to update status. Please try again.'));
     }
   }
 

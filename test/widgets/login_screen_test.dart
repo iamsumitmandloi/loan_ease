@@ -1,24 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:get_it/get_it.dart';
 import 'package:money/presentation/screens/login_screen.dart';
 import 'package:money/presentation/blocs/auth/auth_bloc.dart';
 import 'package:money/data/repositories/auth_repository.dart';
+import 'package:mocktail/mocktail.dart';
 import '../mocks/mocks.dart';
 
 void main() {
   late MockAuthRepository mockRepository;
+  late AuthBloc authBloc;
 
   setUp(() {
     mockRepository = MockAuthRepository();
+    authBloc = AuthBloc(mockRepository);
+
+    // Register in GetIt because LoginScreen uses it
+    GetIt.instance.registerFactory<AuthBloc>(() => authBloc);
+  });
+
+  tearDown(() {
+    GetIt.instance.reset();
+    authBloc.close();
   });
 
   Widget createTestWidget() {
     return MaterialApp(
-      home: BlocProvider<AuthBloc>(
-        create: (_) => AuthBloc(mockRepository),
-        child: const LoginScreen(),
-      ),
+      home: LoginScreen(), // Remove BlocProvider since LoginScreen uses GetIt
     );
   }
 
@@ -43,7 +52,9 @@ void main() {
       expect(find.text('Please enter phone number'), findsOneWidget);
     });
 
-    testWidgets('shows validation error for invalid phone number', (tester) async {
+    testWidgets('shows validation error for invalid phone number', (
+      tester,
+    ) async {
       await tester.pumpWidget(createTestWidget());
 
       // Enter invalid phone (doesn't start with 6-9)
@@ -80,4 +91,3 @@ void main() {
     });
   });
 }
-

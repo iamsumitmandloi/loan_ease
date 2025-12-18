@@ -1,279 +1,44 @@
-# Architecture Documentation
+# Architecture & Design Decisions
 
-## Overview
+This document tracks the technical decisions I made while building LoanEase. Given the 24-hour timeframe (and roughly 3 hours of focused coding), I prioritized simplicity and specialized features over a full-blown enterprise architecture.
 
-LoanEase follows a simplified Clean Architecture pattern, optimized for the project's scope. The goal is separation of concerns without over-engineering.
+## High-Level structure
 
-## Layer Structure
+I've used a standard Flutter folder structure but simplified the Clean Architecture layers a bit:
 
-```
-lib/
-├── core/                    # Shared infrastructure
-│   ├── constants.dart       # API URLs, Hive box names, app config
-│   ├── di.dart              # Dependency injection (get_it)
-│   ├── theme.dart           # Colors, text styles, ThemeData
-│   └── router.dart          # go_router configuration
-│
-├── data/                    # Data layer
-│   ├── models/              # Data models (match API JSON)
-│   │   ├── loan_model.dart
-│   │   ├── dashboard_model.dart
-│   │   └── user_model.dart
-│   ├── services/            # Data sources
-│   │   ├── api_service.dart     # Remote API calls (Dio)
-│   │   └── hive_service.dart    # Local storage (Hive)
-│   └── repositories/        # Data coordination + merge logic
-│       ├── loan_repository.dart
-│       ├── dashboard_repository.dart
-│       └── auth_repository.dart
-│
-└── presentation/            # UI layer
-    ├── blocs/               # State management
-    │   ├── auth/
-    │   ├── dashboard/
-    │   ├── loan_list/
-    │   ├── loan_form/
-    │   └── loan_detail/
-    ├── screens/             # Full page widgets
-    └── widgets/             # Reusable components
-```
+- **`presentation/`**: All the UI stuff. Screens, widgets, and the BLoCs that drive them.
+- **`data/`**: This handles everything related to APIs and the local database. I decided to keep models here too instead of separating them into a `domain` layer because for a project this size, mapping `DataModel` <-> `DomainEntity` just adds boilerplate without much value.
+- **`core/`**: Stuff used everywhere—DI setup, constants, theme, and the router.
 
-## Why This Structure?
+## The Tricky Part: Merging Data
 
-### No Separate Domain Layer
+The hardest technical challenge was making the app work with both read-only API data and local write-only data.
 
-Traditional Clean Architecture has a domain layer with entities and use cases. I skipped this because:
+The assignment required that new loans created locally should be visible alongside the remote ones, and local status updates should override the remote status.
 
-1. **Project size**: For ~5 screens, separate entity classes add boilerplate without benefit
-2. **Time constraint**: 3 hours doesn't justify the abstraction overhead
-3. **Simple data flow**: Models can serve as both data transfer objects and domain entities
+Here's how I handled it in `LoanRepository`:
 
-If the app grew larger or had complex business rules, I'd add a domain layer.
+1.  **Fetch & Fallback**: I try to fetch standard loans from the API. If that fails (offline/error), I don't crash—I just log it and proceed with local data only.
+2.  **Local Storage**: I use Hive to store "local-only" loans. I prefix their IDs with `local_` so I can easily tell them apart later if needed.
+3.  **Status Overrides**: This was the key. I have a separate Hive box that just stores `{loanId: newStatus}`.
+4.  **Merging**: When the UI asks for loans, I grab the remote list + the local list, combine them, and then loop through to apply any status overrides from the local DB. This way, "Approved" locally beats "Pending" remotely.
 
-### BLoC vs Cubit Decision
+## State Management Choices
 
-| Screen | Choice | Reason |
-|--------|--------|--------|
-| Dashboard | Cubit | Simple fetch & display, no complex events |
-| Loan List | BLoC | Multiple events: search, filter, sort, status update |
-| Loan Form | Cubit | Step wizard with simple state progression |
-| Loan Detail | Cubit | Load + two actions (approve/reject) |
-| Auth | BLoC | Distinct login flow events |
+I used **flutter_bloc** for everything, but I mixed BLoCs and Cubits:
 
-**Rule**: Use Cubit for simple state machines, BLoC when you have multiple distinct user actions that benefit from event-driven architecture.
+*   **Cubits** for simple screens (Dashboard, Forms). If the state is just `Loading -> Loaded`, a full BLoC with Events is overkill.
+*   **BLoCs** for the Loan List. This screen has to handle searching, filtering, sorting, and pull-to-refresh all at once, so having explicit Events (`SearchLoans`, `SortLoans`) made the logic much easier to trace than a massive function in a Cubit.
 
----
+## Tech Stack Note
 
-## Data Flow
+*   **Hive**: Chosen because it's pure Dart and fast to set up. SQLite would have required more boilerplate for migrations.
+*   **GetIt**: I prefer this over Provider-based DI because it makes it easier to access repositories inside other repositories if needed (though I didn't need that here).
+*   **GoRouter**: Standard choice for navigation nowadays.
 
-### The Merge Problem
+## Future Improvements
 
-This is the critical part. We have:
-- **Remote API**: Read-only, returns 20 loan applications
-- **Local Hive**: Stores new applications + status updates
-
-```
-┌─────────────────┐     ┌─────────────────┐
-│   Remote API    │     │   Local Hive    │
-│   (GET only)    │     │   (CRUD)        │
-│                 │     │                 │
-│  20 loan apps   │     │  - local apps   │
-│  dashboard      │     │  - status       │
-│  user profile   │     │    overrides    │
-│                 │     │  - form draft   │
-│                 │     │  - session      │
-└────────┬────────┘     └────────┬────────┘
-         │                       │
-         └───────────┬───────────┘
-                     │
-              ┌──────▼──────┐
-              │   MERGE     │
-              │   LOGIC     │
-              └──────┬──────┘
-                     │
-              ┌──────▼──────┐
-              │   Display   │
-              │   to User   │
-              └─────────────┘
-```
-
-### Merge Logic (Repository Layer)
-
-**Implementation in `loan_repository.dart`:**
-
-```dart
-Future<List<LoanModel>> getLoans() async {
-  // 1. Fetch remote loans from API
-  final remoteLoans = await _apiService.getLoanApplications();
-  
-  // 2. Get local-only loans (created in app, id starts with 'local_')
-  final localLoans = _hiveService.getLocalLoans();
-  
-  // 3. Get status overrides (approve/reject actions stored locally)
-  final statusOverrides = _hiveService.getStatusOverrides();
-  
-  // 4. Combine remote + local apps
-  final allLoans = [...remoteLoans, ...localLoans];
-  
-  // 5. Apply status overrides - LOCAL WINS
-  final mergedLoans = allLoans.map((loan) {
-    final override = statusOverrides[loan.id];
-    if (override != null) {
-      return loan.copyWith(
-        status: override.status,
-        updatedAt: override.timestamp,
-        rejectionReason: override.reason,
-      );
-    }
-    return loan;
-  }).toList();
-  
-  // 6. Sort by newest first
-  mergedLoans.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
-  
-  return mergedLoans;
-}
-```
-
-**Key Points:**
-- Local apps have ID prefix `local_` to distinguish from remote
-- Status overrides are keyed by loan ID
-- If remote fetch fails, fallback to local-only data
-- copyWith() ensures immutability
-
-### Hive Box Schema
-
-```
-Box: 'local_loans'
-├── Key: loan.id (String, starts with 'local_')
-└── Value: LoanModel (full loan object)
-
-Box: 'status_overrides'
-├── Key: loan.id (String)
-└── Value: {status: String, reason?: String, timestamp: DateTime}
-
-Box: 'draft'
-├── Key: 'current'
-└── Value: {step: int, data: Map<String, dynamic>}
-
-Box: 'session'
-├── Key: 'auth'
-└── Value: {isLoggedIn: bool, phone: String, timestamp: DateTime}
-```
-
----
-
-## State Management
-
-### Dashboard State
-
-```dart
-// Simple - just fetch and display
-abstract class DashboardState {}
-class DashboardInitial extends DashboardState {}
-class DashboardLoading extends DashboardState {}
-class DashboardLoaded extends DashboardState {
-  final DashboardStats stats;
-}
-class DashboardError extends DashboardState {
-  final String message;
-}
-```
-
-### Loan List State (more complex)
-
-```dart
-// Has filters, search, sorting
-class LoanListState {
-  final List<LoanApplication> loans;
-  final List<LoanApplication> filteredLoans;
-  final String searchQuery;
-  final Set<String> statusFilters;
-  final String sortBy;
-  final bool isLoading;
-  final String? error;
-}
-
-// Events
-abstract class LoanListEvent {}
-class LoadLoans extends LoanListEvent {}
-class SearchLoans extends LoanListEvent { final String query; }
-class FilterByStatus extends LoanListEvent { final Set<String> statuses; }
-class SortLoans extends LoanListEvent { final String sortBy; }
-class UpdateLoanStatus extends LoanListEvent { 
-  final String loanId;
-  final String newStatus;
-  final String? reason;
-}
-class RefreshLoans extends LoanListEvent {}
-```
-
----
-
-## Error Handling Strategy
-
-### API Errors
-
-```dart
-try {
-  final response = await dio.get(url);
-  return Model.fromJson(response.data);
-} on DioException catch (e) {
-  if (e.type == DioExceptionType.connectionTimeout) {
-    throw NetworkException('Connection timeout');
-  }
-  throw ApiException(e.message ?? 'Unknown error');
-}
-```
-
-### Repository Layer
-
-Repository catches service exceptions and returns Either<Failure, Success> or throws domain-specific exceptions that BLoCs handle.
-
-### BLoC Layer
-
-BLoCs catch repository exceptions and emit error states with user-friendly messages.
-
----
-
-## Performance Considerations
-
-1. **const widgets**: Used where possible to reduce rebuilds
-2. **Lazy loading**: Services registered as lazy singletons
-3. **Efficient list builds**: Using ListView.builder, not Column with children
-4. **Hive**: Fast local reads, no SQL overhead
-
----
-
-## Testing Strategy (if time permits)
-
-Priority for unit tests:
-1. Merge logic in LoanRepository
-2. LoanListBloc event handling
-3. Form validation logic
-
-Would use:
-- `bloc_test` for BLoC testing
-- `mocktail` for mocking dependencies
-
----
-
-## Trade-offs & Decisions
-
-| Decision | Alternative | Why I chose this |
-|----------|-------------|------------------|
-| Hive over SQLite | sqflite, drift | Pure Dart, no migrations, faster setup |
-| get_it over injectable | injectable + codegen | Less overhead for small project |
-| No domain layer | Full Clean Architecture | Time constraint, simple data flow |
-| go_router | auto_route | Simpler, no codegen needed |
-
----
-
-## What I'd Change With More Time
-
-1. Add proper domain layer with entities and use cases
-2. Implement offline sync queue for status updates
-3. Add comprehensive unit tests
-4. Use freezed for immutable state classes
-5. Add proper error boundary widgets
-
+If I had more time, I would:
+1.  Add proper distinct Domain Entities.
+2.  Write a sync worker that tries to push local changes to the API when the internet comes back.
+3.  Add unit tests for the Repository merge logic (I added some UI tests, but the data logic is critical).
