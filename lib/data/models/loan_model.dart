@@ -2,7 +2,6 @@ import 'package:hive/hive.dart';
 
 part 'loan_model.g.dart';
 
-/// Loan application status enum
 @HiveType(typeId: 0)
 enum LoanStatus {
   @HiveField(0)
@@ -17,7 +16,6 @@ enum LoanStatus {
   disbursed,
 }
 
-/// Business type enum
 @HiveType(typeId: 1)
 enum BusinessType {
   @HiveField(0)
@@ -30,75 +28,73 @@ enum BusinessType {
   llp,
 }
 
-/// Main loan application model
-/// Matches the API JSON structure
 @HiveType(typeId: 2)
 class LoanModel extends HiveObject {
   @HiveField(0)
   final String id;
-  
+
   @HiveField(1)
   final String applicationNumber;
-  
+
   @HiveField(2)
   LoanStatus status;
-  
+
   @HiveField(3)
   final String businessName;
-  
+
   @HiveField(4)
   final BusinessType businessType;
-  
+
   @HiveField(5)
   final String registrationNumber;
-  
+
   @HiveField(6)
   final int yearsInOperation;
-  
+
   @HiveField(7)
   final String applicantName;
-  
+
   @HiveField(8)
   final String pan;
-  
+
   @HiveField(9)
   final String aadhaar;
-  
+
   @HiveField(10)
   final String phone;
-  
+
   @HiveField(11)
   final String email;
-  
+
   @HiveField(12)
   final double requestedAmount;
-  
+
   @HiveField(13)
   final double? approvedAmount;
-  
+
   @HiveField(14)
   final int tenure;
-  
+
   @HiveField(15)
   final double? interestRate;
-  
+
   @HiveField(16)
   final List<String> purpose;
-  
+
   @HiveField(17)
   final String? rejectionReason;
-  
+
   @HiveField(18)
   final DateTime createdAt;
-  
+
   @HiveField(19)
   DateTime updatedAt;
-  
+
   @HiveField(20)
   final DateTime? disbursementDate;
-  
+
   @HiveField(21)
-  final bool isLocal; // true if created locally
+  final bool isLocal;
 
   LoanModel({
     required this.id,
@@ -125,7 +121,6 @@ class LoanModel extends HiveObject {
     this.isLocal = false,
   });
 
-  /// Parse from API JSON
   factory LoanModel.fromJson(Map<String, dynamic> json) {
     return LoanModel(
       id: json['id'] as String,
@@ -141,25 +136,24 @@ class LoanModel extends HiveObject {
       phone: json['phone'] as String,
       email: json['email'] as String,
       requestedAmount: (json['requestedAmount'] as num).toDouble(),
-      approvedAmount: json['approvedAmount'] != null 
-          ? (json['approvedAmount'] as num).toDouble() 
+      approvedAmount: json['approvedAmount'] != null
+          ? (json['approvedAmount'] as num).toDouble()
           : null,
       tenure: json['tenure'] as int,
-      interestRate: json['interestRate'] != null 
-          ? (json['interestRate'] as num).toDouble() 
+      interestRate: json['interestRate'] != null
+          ? (json['interestRate'] as num).toDouble()
           : null,
       purpose: List<String>.from(json['purpose'] as List),
       rejectionReason: json['rejectionReason'] as String?,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
-      disbursementDate: json['disbursementDate'] != null 
+      disbursementDate: json['disbursementDate'] != null
           ? DateTime.parse(json['disbursementDate'] as String)
           : null,
       isLocal: false,
     );
   }
 
-  /// Convert to JSON (for local storage or display)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -187,7 +181,6 @@ class LoanModel extends HiveObject {
     };
   }
 
-  /// Create a copy with modified fields
   LoanModel copyWith({
     String? id,
     String? applicationNumber,
@@ -238,7 +231,6 @@ class LoanModel extends HiveObject {
     );
   }
 
-  // Helper to parse status from API string
   static LoanStatus _parseStatus(String status) {
     switch (status.toLowerCase()) {
       case 'pending':
@@ -272,7 +264,6 @@ class LoanModel extends HiveObject {
     }
   }
 
-  // Helper to convert business type to API string
   static String _businessTypeToString(BusinessType type) {
     switch (type) {
       case BusinessType.soleProprietorship:
@@ -287,18 +278,17 @@ class LoanModel extends HiveObject {
   }
 }
 
-/// Status override model for local changes
 @HiveType(typeId: 3)
 class StatusOverride extends HiveObject {
   @HiveField(0)
   final String loanId;
-  
+
   @HiveField(1)
   final LoanStatus status;
-  
+
   @HiveField(2)
   final String? reason;
-  
+
   @HiveField(3)
   final DateTime timestamp;
 
@@ -309,4 +299,3 @@ class StatusOverride extends HiveObject {
     required this.timestamp,
   });
 }
-

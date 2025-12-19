@@ -11,26 +11,21 @@ import 'data/models/loan_model.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize Hive for local storage
   await Hive.initFlutter();
 
-  // Register Hive adapters
   Hive.registerAdapter(LoanStatusAdapter());
   Hive.registerAdapter(BusinessTypeAdapter());
   Hive.registerAdapter(LoanModelAdapter());
   Hive.registerAdapter(StatusOverrideAdapter());
 
-  // Open Hive boxes
   await Hive.openBox(HiveBoxes.localLoans);
   await Hive.openBox(HiveBoxes.remoteLoans);
   await Hive.openBox(HiveBoxes.statusOverrides);
   await Hive.openBox(HiveBoxes.draft);
   await Hive.openBox(HiveBoxes.session);
 
-  // Setup dependency injection
   await setupDI();
 
-  // BLoC observer for debugging
   Bloc.observer = AppBlocObserver();
 
   runApp(const LoanEaseApp());
@@ -50,30 +45,29 @@ class LoanEaseApp extends StatelessWidget {
   }
 }
 
-/// BLoC observer for logging state changes
-/// Helpful for debugging during dev work
+// BLoC observer
 class AppBlocObserver extends BlocObserver {
   @override
   void onCreate(BlocBase bloc) {
     super.onCreate(bloc);
-    debugPrint('onCreate -- ${bloc.runtimeType}');
+    debugPrint('${bloc.runtimeType}: created');
   }
 
   @override
   void onChange(BlocBase bloc, Change change) {
     super.onChange(bloc, change);
-    debugPrint('onChange -- ${bloc.runtimeType}, $change');
+    debugPrint('${bloc.runtimeType}: $change');
   }
 
   @override
   void onError(BlocBase bloc, Object error, StackTrace stackTrace) {
-    debugPrint('onError -- ${bloc.runtimeType}, $error');
+    debugPrint('${bloc.runtimeType}: $error');
     super.onError(bloc, error, stackTrace);
   }
 
   @override
   void onClose(BlocBase bloc) {
     super.onClose(bloc);
-    debugPrint('onClose -- ${bloc.runtimeType}');
+    debugPrint('${bloc.runtimeType}: closed');
   }
 }

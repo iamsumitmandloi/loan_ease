@@ -10,8 +10,6 @@ import '../blocs/dashboard/dashboard_cubit.dart';
 import '../blocs/auth/auth_bloc.dart';
 import '../widgets/stat_card.dart';
 
-/// Dashboard screen with animated stat cards
-/// Implements: Implicit animations, Pull to refresh
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -154,19 +152,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Stats grid
                       _buildStatsGrid(state.stats),
                       const SizedBox(height: 24),
-
-                      // Quick actions
                       _buildQuickActions(),
                       const SizedBox(height: 24),
-
-                      // Recent Applications
                       _buildRecentApplications(state.stats),
                       const SizedBox(height: 24),
-
-                      // Loans by status breakdown
                       _buildStatusBreakdown(state.stats),
                     ],
                   ),
@@ -250,7 +241,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
         const SizedBox(height: 12),
-        // Amount cards
         Row(
           children: [
             Expanded(

@@ -1,29 +1,19 @@
 import 'package:flutter/material.dart';
 
-/// App color scheme - keeping it professional for a lending app
 class AppColors {
-  // Primary - trust/finance blue
   static const Color primary = Color(0xFF1E3A5F);
   static const Color primaryLight = Color(0xFF4A6FA5);
   static const Color primaryDark = Color(0xFF0D2137);
-
-  // Secondary - action orange
   static const Color secondary = Color(0xFFE86A33);
-
-  // Status colors
   static const Color success = Color(0xFF2E7D32);
   static const Color warning = Color(0xFFF9A825);
   static const Color error = Color(0xFFC62828);
   static const Color info = Color(0xFF1565C0);
-
-  // Loan status specific
   static const Color pending = Color(0xFFFFA726);
   static const Color underReview = Color(0xFF42A5F5);
   static const Color approved = Color(0xFF66BB6A);
   static const Color rejected = Color(0xFFEF5350);
   static const Color disbursed = Color(0xFF26A69A);
-
-  // Neutrals
   static const Color background = Color(0xFFF5F7FA);
   static const Color surface = Colors.white;
   static const Color textPrimary = Color(0xFF1A1A1A);
@@ -31,7 +21,6 @@ class AppColors {
   static const Color divider = Color(0xFFE5E7EB);
 }
 
-/// App theme configuration
 class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
@@ -90,7 +79,6 @@ class AppTheme {
   }
 }
 
-/// Extension to get status color easily
 extension LoanStatusColor on String {
   Color get statusColor {
     switch (toLowerCase()) {

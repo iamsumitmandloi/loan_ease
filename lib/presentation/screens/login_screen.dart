@@ -7,7 +7,6 @@ import '../../core/theme.dart';
 import '../../core/router.dart';
 import '../blocs/auth/auth_bloc.dart';
 
-/// Login screen with phone number input
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -66,8 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   const SizedBox(height: 60),
-                  
-                  // Logo
                   Center(
                     child: Container(
                       width: 80,
@@ -84,8 +81,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Title
                   const Text(
                     'Welcome to LoanEase',
                     style: TextStyle(
@@ -96,8 +91,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 8),
-                  
-                  // Subtitle
                   Text(
                     'Enter your phone number to continue',
                     style: TextStyle(
@@ -107,8 +100,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 48),
-                  
-                  // Phone input
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
@@ -140,13 +131,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Send OTP button
                   BlocBuilder<AuthBloc, AuthState>(
                     bloc: _authBloc,
                     builder: (context, state) {
                       final isLoading = state is AuthLoading;
-                      
+
                       return ElevatedButton(
                         onPressed: isLoading ? null : _sendOtp,
                         style: ElevatedButton.styleFrom(
@@ -169,8 +158,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     },
                   ),
                   const SizedBox(height: 24),
-                  
-                  // Info text
                   Text(
                     'By continuing, you agree to our Terms of Service and Privacy Policy',
                     style: TextStyle(
@@ -188,4 +175,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

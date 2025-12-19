@@ -9,8 +9,6 @@ import '../../data/models/loan_model.dart';
 import '../blocs/loan_list/loan_list_bloc.dart';
 import '../widgets/loan_card.dart';
 
-/// Loan list screen with search, filter, sort, and swipe actions
-/// Implements: Staggered animation, Swipe actions
 class LoanListScreen extends StatefulWidget {
   final LoanStatus? initialStatus;
 
@@ -31,9 +29,8 @@ class _LoanListScreenState extends State<LoanListScreen> {
     _loanListBloc = getIt<LoanListBloc>();
     _loanListBloc.add(LoadLoans());
 
-    // Auto-apply filter if navigated from Dashboard with a specific status
     if (widget.initialStatus != null) {
-      _showFilters = true; // Show filter chips by default
+      _showFilters = true;
       _loanListBloc.add(FilterByStatus({widget.initialStatus!}));
     }
   }
@@ -164,7 +161,6 @@ class _LoanListScreenState extends State<LoanListScreen> {
       ),
       body: Column(
         children: [
-          // Search bar
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.white,
@@ -192,15 +188,11 @@ class _LoanListScreenState extends State<LoanListScreen> {
               ),
             ),
           ),
-
-          // Filter chips (animated visibility)
           AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             height: _showFilters ? 60 : 0,
             child: _showFilters ? _buildFilterChips() : null,
           ),
-
-          // Loan list
           Expanded(
             child: BlocBuilder<LoanListBloc, LoanListState>(
               bloc: _loanListBloc,
@@ -323,7 +315,6 @@ class _LoanListScreenState extends State<LoanListScreen> {
   }
 
   Widget _buildSlidableLoanCard(LoanModel loan) {
-    // Only allow swipe actions for pending/under_review loans
     final canTakeAction =
         loan.status == LoanStatus.pending ||
         loan.status == LoanStatus.underReview;

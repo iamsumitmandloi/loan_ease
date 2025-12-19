@@ -4,8 +4,6 @@ import '../models/loan_model.dart';
 import '../services/api_service.dart';
 import '../services/hive_service.dart';
 
-/// Loan Repository - coordinates remote and local data
-/// This is where the merge magic happens
 class LoanRepository {
   final ApiService _apiService;
   final HiveService _hiveService;
@@ -13,29 +11,18 @@ class LoanRepository {
 
   LoanRepository(this._apiService, this._hiveService);
 
-  /// Sync remote loans - fetch from API and save to local cache
   Future<void> syncRemoteLoans() async {
     final remoteLoans = await _apiService.getLoanApplications();
     await _hiveService.saveRemoteLoans(remoteLoans);
   }
 
-  /// Get cached loans - merged from remote cache + local data
-  /// Reads ONLY from Hive. No network calls.
-  /// Used by both Dashboard and Loan List.
   List<LoanModel> getCachedLoans() {
-    // 1. Get cached remote loans
     final remoteLoans = _hiveService.getRemoteLoans();
-
-    // 2. Get local-only loans
     final localLoans = _hiveService.getLocalLoans();
-
-    // 3. Get status overrides
     final statusOverrides = _hiveService.getStatusOverrides();
 
-    // 4. Merge: remote + local apps
     final allLoans = [...remoteLoans, ...localLoans];
 
-    // 5. Apply status overrides (local wins)
     final mergedLoans = allLoans.map((loan) {
       final override = statusOverrides[loan.id];
       if (override != null) {
@@ -48,32 +35,27 @@ class LoanRepository {
       return loan;
     }).toList();
 
-    // 6. Sort by updatedAt (newest first)
     mergedLoans.sort((a, b) => b.updatedAt.compareTo(a.updatedAt));
 
     return mergedLoans;
   }
 
-  /// Get loans - alias for getCachedLoans to maintain backward compatibility
-  /// The BLoC still awaits this, so we wrap in Future
   Future<List<LoanModel>> getLoans() async {
     return getCachedLoans();
   }
 
-  /// Get a single loan by ID from cache
   Future<LoanModel?> getLoanById(String id) async {
     try {
       final loans = getCachedLoans();
       return loans.firstWhere((l) => l.id == id);
     } catch (_) {
       if (kDebugMode) {
-        debugPrint('ℹ️ Loan with ID "$id" not found in cache');
+        debugPrint('Loan "$id" not found');
       }
       return null;
     }
   }
 
-  /// Create a new loan application (local only)
   Future<LoanModel> createLoan({
     required String businessName,
     required BusinessType businessType,
@@ -88,11 +70,8 @@ class LoanRepository {
     required int tenure,
     required List<String> purpose,
   }) async {
-    // Generate unique ID with local prefix
     final id = 'local_${_uuid.v4()}';
     final now = DateTime.now();
-
-    // Generate application number
     final appNumber =
         'LOAN-${now.year}-${now.millisecondsSinceEpoch.toString().substring(8)}';
 
@@ -117,14 +96,11 @@ class LoanRepository {
       isLocal: true,
     );
 
-    // Save to local storage
     await _hiveService.saveLocalLoan(loan);
 
     return loan;
   }
 
-  /// Update loan status (approve/reject)
-  /// Saves as status override for both remote and local loans
   Future<void> updateLoanStatus(
     String loanId,
     LoanStatus newStatus, {
@@ -133,32 +109,27 @@ class LoanRepository {
     await _hiveService.saveStatusOverride(loanId, newStatus, reason: reason);
   }
 
-  /// Approve a loan
   Future<void> approveLoan(String loanId) async {
     await updateLoanStatus(loanId, LoanStatus.approved);
   }
 
-  /// Reject a loan
   Future<void> rejectLoan(String loanId, String reason) async {
     await updateLoanStatus(loanId, LoanStatus.rejected, reason: reason);
   }
 
-  /// Delete a local loan (can't delete remote loans)
   Future<bool> deleteLoan(String loanId) async {
     if (loanId.startsWith('local_')) {
       await _hiveService.deleteLocalLoan(loanId);
       return true;
     }
-    return false; // Can't delete remote loans
+    return false;
   }
 
-  /// Filter loans by status
   Future<List<LoanModel>> getLoansByStatus(Set<LoanStatus> statuses) async {
     final loans = await getLoans();
     return loans.where((l) => statuses.contains(l.status)).toList();
   }
 
-  /// Search loans by query (business name or applicant name)
   Future<List<LoanModel>> searchLoans(String query) async {
     final loans = await getLoans();
     final lowerQuery = query.toLowerCase();
@@ -170,7 +141,6 @@ class LoanRepository {
     }).toList();
   }
 
-  /// Get loans within amount range
   Future<List<LoanModel>> getLoansByAmountRange(
     double minAmount,
     double maxAmount,
@@ -184,19 +154,14 @@ class LoanRepository {
         .toList();
   }
 
-  // ==================== DRAFT OPERATIONS ====================
-
-  /// Save form draft
   Future<void> saveDraft(int step, Map<String, dynamic> data) async {
     await _hiveService.saveDraft(step, data);
   }
 
-  /// Get current draft
   DraftData? getDraft() {
     return _hiveService.getDraft();
   }
 
-  /// Clear draft
   Future<void> clearDraft() async {
     await _hiveService.clearDraft();
   }

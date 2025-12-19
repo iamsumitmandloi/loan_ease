@@ -4,17 +4,11 @@ import '../../core/theme.dart';
 import '../../data/models/loan_model.dart';
 import 'status_badge.dart';
 
-/// Loan application card for list view
-/// Has Hero tag for detail screen transition
 class LoanCard extends StatelessWidget {
   final LoanModel loan;
   final VoidCallback? onTap;
 
-  const LoanCard({
-    super.key,
-    required this.loan,
-    this.onTap,
-  });
+  const LoanCard({super.key, required this.loan, this.onTap});
 
   String _formatAmount(double amount) {
     final formatter = NumberFormat.currency(
@@ -66,7 +60,6 @@ class LoanCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Header row: Business name + Status
                 Row(
                   children: [
                     Expanded(
@@ -100,18 +93,14 @@ class LoanCard extends StatelessWidget {
                 const SizedBox(height: 12),
                 const Divider(height: 1),
                 const SizedBox(height: 12),
-                
-                // Info row
                 Row(
                   children: [
-                    // Applicant
                     Expanded(
                       child: _InfoItem(
                         icon: Icons.person_outline,
                         label: loan.applicantName,
                       ),
                     ),
-                    // Business type
                     _InfoItem(
                       icon: Icons.business,
                       label: _getBusinessTypeLabel(loan.businessType),
@@ -119,11 +108,8 @@ class LoanCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                
-                // Amount row
                 Row(
                   children: [
-                    // Amount
                     Expanded(
                       child: _InfoItem(
                         icon: Icons.currency_rupee,
@@ -131,19 +117,19 @@ class LoanCard extends StatelessWidget {
                         isBold: true,
                       ),
                     ),
-                    // Date
                     _InfoItem(
                       icon: Icons.calendar_today_outlined,
                       label: _formatDate(loan.updatedAt),
                     ),
                   ],
                 ),
-                
-                // Local badge if applicable
                 if (loan.isLocal) ...[
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.info.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -151,7 +137,11 @@ class LoanCard extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.phone_android, size: 12, color: AppColors.info),
+                        Icon(
+                          Icons.phone_android,
+                          size: 12,
+                          color: AppColors.info,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           'Created locally',
@@ -204,4 +194,3 @@ class _InfoItem extends StatelessWidget {
     );
   }
 }
-

@@ -1,4 +1,3 @@
-/// Base exception for all API-related errors
 abstract class ApiException implements Exception {
   final String message;
   final String? endpoint;
@@ -16,7 +15,6 @@ abstract class ApiException implements Exception {
   String toString() => message;
 }
 
-/// Network-related errors (timeout, connection issues)
 class NetworkException extends ApiException {
   const NetworkException(
     super.message, {
@@ -26,7 +24,6 @@ class NetworkException extends ApiException {
   });
 }
 
-/// Server errors (5xx status codes)
 class ServerException extends ApiException {
   const ServerException(
     super.message, {
@@ -36,7 +33,6 @@ class ServerException extends ApiException {
   });
 }
 
-/// Client errors (4xx status codes)
 class ClientException extends ApiException {
   const ClientException(
     super.message, {
@@ -46,7 +42,6 @@ class ClientException extends ApiException {
   });
 }
 
-/// JSON parsing/format errors
 class ParseException extends ApiException {
   final String? field;
   final String? expectedType;
@@ -61,7 +56,6 @@ class ParseException extends ApiException {
   });
 }
 
-/// Unknown/unexpected errors
 class UnknownApiException extends ApiException {
   const UnknownApiException(
     super.message, {
@@ -70,4 +64,3 @@ class UnknownApiException extends ApiException {
     super.originalError,
   });
 }
-

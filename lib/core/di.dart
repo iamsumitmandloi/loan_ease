@@ -15,10 +15,7 @@ import 'network/retry_interceptor.dart'; // Added import
 
 final getIt = GetIt.instance;
 
-/// Setup dependency injection
-/// Called once at app startup
 Future<void> setupDI() async {
-  // Core - Dio HTTP client
   final dio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 15),
@@ -26,7 +23,6 @@ Future<void> setupDI() async {
     ),
   );
 
-  // Add retry interceptor for automatic retry with exponential backoff
   dio.interceptors.add(
     RetryInterceptor(
       maxRetries: 3,
@@ -34,22 +30,15 @@ Future<void> setupDI() async {
     ),
   );
 
-  // Add logging interceptor in debug mode
   dio.interceptors.add(
-    LogInterceptor(
-      requestBody: true,
-      responseBody: false, // Don't log large JSON responses
-      error: true,
-    ),
+    LogInterceptor(requestBody: true, responseBody: false, error: true),
   );
 
   getIt.registerSingleton<Dio>(dio);
 
-  // Services
   getIt.registerLazySingleton<ApiService>(() => ApiService(getIt<Dio>()));
   getIt.registerLazySingleton<HiveService>(() => HiveService());
 
-  // Repositories
   getIt.registerLazySingleton<LoanRepository>(
     () => LoanRepository(getIt<ApiService>(), getIt<HiveService>()),
   );
@@ -60,7 +49,6 @@ Future<void> setupDI() async {
     () => AuthRepository(getIt<ApiService>(), getIt<HiveService>()),
   );
 
-  // BLoCs - registered as factory so we get fresh instances
   getIt.registerFactory<AuthBloc>(() => AuthBloc(getIt<AuthRepository>()));
   getIt.registerFactory<DashboardCubit>(
     () => DashboardCubit(getIt<DashboardRepository>()),

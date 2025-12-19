@@ -10,7 +10,6 @@ import '../presentation/screens/loan_form_screen.dart';
 import '../presentation/screens/loan_detail_screen.dart';
 import '../data/models/loan_model.dart';
 
-/// Route names as constants - prevents typos
 class Routes {
   static const String splash = '/';
   static const String login = '/login';
@@ -21,13 +20,10 @@ class Routes {
   static const String newApplication = '/loans/new';
 }
 
-/// App router configuration
-/// Using go_router for declarative routing
 final appRouter = GoRouter(
   initialLocation: Routes.splash,
   debugLogDiagnostics: true,
   routes: [
-    // Splash - entry point with animated logo
     GoRoute(
       path: Routes.splash,
       name: 'splash',
@@ -39,16 +35,12 @@ final appRouter = GoRouter(
         },
       ),
     ),
-
-    // Login screen
     GoRoute(
       path: Routes.login,
       name: 'login',
       pageBuilder: (context, state) =>
           _buildSlideTransition(state, const LoginScreen()),
     ),
-
-    // OTP verification
     GoRoute(
       path: Routes.otp,
       name: 'otp',
@@ -57,21 +49,16 @@ final appRouter = GoRouter(
         return _buildSlideTransition(state, OtpScreen(phone: phone));
       },
     ),
-
-    // Dashboard - main home screen
     GoRoute(
       path: Routes.dashboard,
       name: 'dashboard',
       pageBuilder: (context, state) =>
           _buildSlideTransition(state, const DashboardScreen()),
     ),
-
-    // Loan list
     GoRoute(
       path: Routes.loanList,
       name: 'loanList',
       pageBuilder: (context, state) {
-        // Extract status from query parameters
         final statusParam = state.uri.queryParameters['status'];
         LoanStatus? initialStatus;
 
@@ -85,16 +72,12 @@ final appRouter = GoRouter(
         );
       },
     ),
-
-    // New application form - MUST come before :id route!
     GoRoute(
       path: Routes.newApplication,
       name: 'newApplication',
       pageBuilder: (context, state) =>
           _buildSlideTransition(state, const LoanFormScreen()),
     ),
-
-    // Loan detail with Hero animation
     GoRoute(
       path: '/loans/:id',
       name: 'loanDetail',
@@ -113,7 +96,6 @@ final appRouter = GoRouter(
   ],
 );
 
-/// Parse status string from query parameter to LoanStatus enum
 LoanStatus? _parseStatusFromString(String status) {
   switch (status.toLowerCase()) {
     case 'pending':
@@ -131,8 +113,6 @@ LoanStatus? _parseStatusFromString(String status) {
   }
 }
 
-/// Custom slide transition for page navigation
-/// This is our PAGE TRANSITION animation
 CustomTransitionPage<T> _buildSlideTransition<T>(
   GoRouterState state,
   Widget child,

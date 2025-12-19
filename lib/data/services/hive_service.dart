@@ -3,45 +3,32 @@ import '../models/loan_model.dart';
 import '../models/user_model.dart';
 import '../../core/constants.dart';
 
-/// Hive Service - handles all local data storage
-/// 4 boxes: local_loans, status_overrides, draft, session
 class HiveService {
-  // Box references
   Box get _localLoansBox => Hive.box(HiveBoxes.localLoans);
   Box get _remoteLoansBox => Hive.box(HiveBoxes.remoteLoans);
   Box get _statusOverridesBox => Hive.box(HiveBoxes.statusOverrides);
   Box get _draftBox => Hive.box(HiveBoxes.draft);
   Box get _sessionBox => Hive.box(HiveBoxes.session);
 
-  // ==================== LOCAL LOANS ====================
-
-  /// Save a new loan application (created locally)
   Future<void> saveLocalLoan(LoanModel loan) async {
     await _localLoansBox.put(loan.id, loan.toJson());
   }
 
-  /// Get all locally created loans
   List<LoanModel> getLocalLoans() {
     final loans = <LoanModel>[];
     for (final key in _localLoansBox.keys) {
       final json = _localLoansBox.get(key) as Map<dynamic, dynamic>;
-      // Convert to proper Map<String, dynamic>
       final properJson = json.map((k, v) => MapEntry(k.toString(), v));
       loans.add(_loanFromLocalJson(properJson));
     }
     return loans;
   }
 
-  /// Delete a local loan
   Future<void> deleteLocalLoan(String id) async {
     await _localLoansBox.delete(id);
   }
 
-  // ==================== REMOTE LOANS ====================
-
-  /// Save remote loans (overwrite cache)
   Future<void> saveRemoteLoans(List<LoanModel> loans) async {
-    // Clear existing remote loans first to ensure we don't keep stale ones
     await _remoteLoansBox.clear();
 
     final Map<String, dynamic> entries = {};
@@ -51,7 +38,6 @@ class HiveService {
     await _remoteLoansBox.putAll(entries);
   }
 
-  /// Get all cached remote loans
   List<LoanModel> getRemoteLoans() {
     final loans = <LoanModel>[];
     for (final key in _remoteLoansBox.keys) {
@@ -62,9 +48,6 @@ class HiveService {
     return loans;
   }
 
-  // ==================== STATUS OVERRIDES ====================
-
-  /// Save a status override for a loan
   Future<void> saveStatusOverride(
     String loanId,
     LoanStatus status, {
@@ -77,7 +60,6 @@ class HiveService {
     });
   }
 
-  /// Get all status overrides as a map
   Map<String, StatusOverrideData> getStatusOverrides() {
     final overrides = <String, StatusOverrideData>{};
 
@@ -93,7 +75,6 @@ class HiveService {
     return overrides;
   }
 
-  /// Check if a loan has a status override
   StatusOverrideData? getStatusOverride(String loanId) {
     final data = _statusOverridesBox.get(loanId);
     if (data == null) return null;
@@ -106,9 +87,6 @@ class HiveService {
     );
   }
 
-  // ==================== DRAFT ====================
-
-  /// Save form draft
   Future<void> saveDraft(int step, Map<String, dynamic> data) async {
     await _draftBox.put('current', {
       'step': step,
@@ -117,7 +95,6 @@ class HiveService {
     });
   }
 
-  /// Get current draft
   DraftData? getDraft() {
     final data = _draftBox.get('current');
     if (data == null) return null;
@@ -130,19 +107,14 @@ class HiveService {
     );
   }
 
-  /// Clear draft (after submission)
   Future<void> clearDraft() async {
     await _draftBox.delete('current');
   }
 
-  // ==================== SESSION ====================
-
-  /// Save user session
   Future<void> saveSession(SessionModel session) async {
     await _sessionBox.put('auth', session.toJson());
   }
 
-  /// Get current session
   SessionModel getSession() {
     final data = _sessionBox.get('auth');
     if (data == null) return SessionModel.empty();
@@ -152,19 +124,14 @@ class HiveService {
     return SessionModel.fromJson(properMap);
   }
 
-  /// Clear session (logout)
   Future<void> clearSession() async {
     await _sessionBox.delete('auth');
   }
 
-  /// Check if user is logged in
   bool isLoggedIn() {
     return getSession().isLoggedIn;
   }
 
-  // ==================== HELPERS ====================
-
-  /// Parse loan from local JSON storage
   LoanModel _loanFromLocalJson(Map<String, dynamic> json) {
     return LoanModel(
       id: json['id'] as String,
@@ -217,7 +184,6 @@ class HiveService {
   }
 }
 
-/// Helper class for status override data
 class StatusOverrideData {
   final LoanStatus status;
   final String? reason;
@@ -230,7 +196,6 @@ class StatusOverrideData {
   });
 }
 
-/// Helper class for draft data
 class DraftData {
   final int step;
   final Map<String, dynamic> data;

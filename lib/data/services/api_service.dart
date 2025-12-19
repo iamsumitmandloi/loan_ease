@@ -6,17 +6,13 @@ import '../models/user_model.dart';
 import '../../core/constants.dart';
 import '../../core/errors/api_exceptions.dart';
 
-/// API Service - handles all remote data fetching
-/// All endpoints are GET only (static JSON files)
-/// Note: Gist returns text/plain, so we manually parse JSON
 class ApiService {
   final Dio _dio;
 
   ApiService(this._dio);
 
-  /// Parse response - handles both String and Map responses
-  /// Gist URLs return text/plain content-type, so Dio doesn't auto-parse
   Map<String, dynamic> _parseResponse(dynamic data, String endpoint) {
+    // Gist returns text/plain, need to parse manually
     try {
       if (data is String) {
         if (data.isEmpty) {
@@ -53,14 +49,12 @@ class ApiService {
     }
   }
 
-  /// Fetch dashboard statistics
   Future<DashboardModel> getDashboardStats() async {
     final endpoint = ApiConstants.dashboardStats;
     try {
       final response = await _dio.get(endpoint);
       final data = _parseResponse(response.data, endpoint);
-      
-      // Validate required structure
+
       if (!data.containsKey('dashboard_stats')) {
         throw ParseException(
           'Missing required field: dashboard_stats',
@@ -68,7 +62,7 @@ class ApiService {
           field: 'dashboard_stats',
         );
       }
-      
+
       return DashboardModel.fromJson(data);
     } on ParseException {
       rethrow;
@@ -89,14 +83,12 @@ class ApiService {
     }
   }
 
-  /// Fetch all loan applications from remote
   Future<List<LoanModel>> getLoanApplications() async {
     final endpoint = ApiConstants.loanApplications;
     try {
       final response = await _dio.get(endpoint);
       final data = _parseResponse(response.data, endpoint);
-      
-      // Validate required structure
+
       if (!data.containsKey('loan_applications')) {
         throw ParseException(
           'Missing required field: loan_applications',
@@ -104,7 +96,7 @@ class ApiService {
           field: 'loan_applications',
         );
       }
-      
+
       final applications = data['loan_applications'];
       if (applications is! List) {
         throw ParseException(
@@ -114,7 +106,7 @@ class ApiService {
           expectedType: 'List',
         );
       }
-      
+
       final loans = <LoanModel>[];
       for (var i = 0; i < applications.length; i++) {
         try {
@@ -138,7 +130,7 @@ class ApiService {
           );
         }
       }
-      
+
       return loans;
     } on ParseException {
       rethrow;
@@ -154,7 +146,6 @@ class ApiService {
     }
   }
 
-  /// Fetch user profile
   Future<UserModel> getUserProfile() async {
     final endpoint = ApiConstants.userProfile;
     try {
@@ -181,10 +172,9 @@ class ApiService {
     }
   }
 
-  /// Convert Dio errors to specific exception types
   ApiException _handleDioError(DioException e, String endpoint) {
     final statusCode = e.response?.statusCode;
-    
+
     switch (e.type) {
       case DioExceptionType.connectionTimeout:
         return NetworkException(
@@ -192,28 +182,28 @@ class ApiService {
           endpoint: endpoint,
           originalError: e,
         );
-        
+
       case DioExceptionType.sendTimeout:
         return NetworkException(
           'Request timeout. Failed to send data to server.',
           endpoint: endpoint,
           originalError: e,
         );
-        
+
       case DioExceptionType.receiveTimeout:
         return NetworkException(
           'Response timeout. Server took too long to send data.',
           endpoint: endpoint,
           originalError: e,
         );
-        
+
       case DioExceptionType.connectionError:
         return NetworkException(
           'No internet connection. Please check your network and try again.',
           endpoint: endpoint,
           originalError: e,
         );
-        
+
       case DioExceptionType.badResponse:
         if (statusCode != null) {
           if (statusCode >= 500) {
@@ -251,21 +241,21 @@ class ApiService {
           endpoint: endpoint,
           originalError: e,
         );
-        
+
       case DioExceptionType.cancel:
         return NetworkException(
           'Request was cancelled',
           endpoint: endpoint,
           originalError: e,
         );
-        
+
       case DioExceptionType.badCertificate:
         return NetworkException(
           'SSL certificate error. Please check your connection.',
           endpoint: endpoint,
           originalError: e,
         );
-        
+
       default:
         return UnknownApiException(
           'Network error: ${e.message ?? 'Unknown error occurred'}',
@@ -275,21 +265,16 @@ class ApiService {
     }
   }
 
-  /// Extract error message from response data
   String _extractErrorMessage(dynamic data) {
     if (data == null) return '';
     if (data is Map) {
-      return data['message']?.toString() ?? 
-             data['error']?.toString() ?? 
-             '';
+      return data['message']?.toString() ?? data['error']?.toString() ?? '';
     }
     if (data is String) {
       try {
         final json = jsonDecode(data);
         if (json is Map) {
-          return json['message']?.toString() ?? 
-                 json['error']?.toString() ?? 
-                 '';
+          return json['message']?.toString() ?? json['error']?.toString() ?? '';
         }
       } catch (_) {
         // Not JSON, return as is

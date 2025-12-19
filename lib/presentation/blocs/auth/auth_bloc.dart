@@ -5,8 +5,6 @@ import '../../../data/repositories/auth_repository.dart';
 part 'auth_event.dart';
 part 'auth_state.dart';
 
-/// Auth BLoC - handles login flow
-/// Using BLoC for distinct events: CheckAuth, SendOtp, VerifyOtp, Logout
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final AuthRepository _repository;
 
@@ -17,11 +15,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<Logout>(_onLogout);
   }
 
-  /// Check if user is already logged in
-  void _onCheckAuthStatus(
-    CheckAuthStatus event,
-    Emitter<AuthState> emit,
-  ) {
+  void _onCheckAuthStatus(CheckAuthStatus event, Emitter<AuthState> emit) {
     final isLoggedIn = _repository.isLoggedIn();
     if (isLoggedIn) {
       emit(Authenticated());
@@ -30,13 +24,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Send OTP to phone number
-  Future<void> _onSendOtp(
-    SendOtp event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onSendOtp(SendOtp event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-    
+
     try {
       final success = await _repository.sendOtp(event.phone);
       if (success) {
@@ -49,13 +39,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Verify OTP
-  Future<void> _onVerifyOtp(
-    VerifyOtp event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onVerifyOtp(VerifyOtp event, Emitter<AuthState> emit) async {
     emit(AuthLoading());
-    
+
     try {
       final success = await _repository.verifyOtp(event.phone, event.otp);
       if (success) {
@@ -68,13 +54,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     }
   }
 
-  /// Logout
-  Future<void> _onLogout(
-    Logout event,
-    Emitter<AuthState> emit,
-  ) async {
+  Future<void> _onLogout(Logout event, Emitter<AuthState> emit) async {
     await _repository.logout();
     emit(Unauthenticated());
   }
 }
-

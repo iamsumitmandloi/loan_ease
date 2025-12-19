@@ -1,4 +1,3 @@
-/// API endpoints and app constants
 class ApiConstants {
   static const String baseUrl =
       'https://gist.githubusercontent.com/rishimalgwa';
@@ -16,7 +15,6 @@ class ApiConstants {
       '$baseUrl/5b598c4b5744fd1aa0714d8216398e53/raw/3d4ef3eba42322599c4db30acfbfbd776f9e53d1/gistfile1.txt';
 }
 
-/// Hive box names
 class HiveBoxes {
   static const String localLoans = 'local_loans';
   static const String remoteLoans = 'remote_loans';
@@ -25,13 +23,10 @@ class HiveBoxes {
   static const String session = 'session';
 }
 
-/// App-wide constants
 class AppConstants {
   static const String appName = 'LoanEase';
   static const int otpLength = 6;
   static const int otpTimeoutSeconds = 30;
-
-  // Loan amount constraints (from requirements)
   static const double minLoanAmount = 50000;
   static const double maxLoanAmount = 5000000;
   static const int minTenure = 6;
